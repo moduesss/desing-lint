@@ -7,5 +7,8 @@
   "editorType": ["figma", "figjam"],
   "relaunchButtons": [
     { "command": "scan", "name": "Run Design Lint" }
-  ]
+  ],
+  "networkAccess": {
+    "allowedDomains": ["https://static.figma.com"]
+  }
 }

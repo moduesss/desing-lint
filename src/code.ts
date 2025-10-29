@@ -3,6 +3,7 @@
 import { runAllAnalyzers } from './analyzers'
 import type { ScanReport } from './utils/types'
 import type { DesignTokens } from './utils/tokens'
+import uiHtml from '../dist/index.html'
 
 function log(...args: any[]) {
   console.log('[Design Lint]', ...args)
@@ -27,7 +28,7 @@ function post(type: string, payload?: any) {
   figma.ui.postMessage({ type, payload })
 }
 
-figma.showUI(__html__, { width: 420, height: 580 })
+figma.showUI(uiHtml, { width: 420, height: 580 })
 post('STATUS', { status: 'idle' })
 
 figma.ui.onmessage = async (msg: any) => {

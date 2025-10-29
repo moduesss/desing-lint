@@ -4,17 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "rimraf dist && npm-run-all -p dev:ui dev:code",
+    "prepare:ui": "vite build --config vite.config.ts --mode development --sourcemap",
+    "dev": "rimraf dist && npm run prepare:ui && npm-run-all -p dev:ui dev:code",
     "dev:ui": "vite build --config vite.config.ts --watch --mode development --sourcemap",
     "dev:code": "node esbuild.config.mjs --watch",
     "build": "rimraf dist && npm-run-all -p build:ui build:code",
     "build:ui": "vite build --config vite.config.ts",
     "build:code": "node esbuild.config.mjs"
   },
+
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
+  
   "devDependencies": {
     "@figma/plugin-typings": "^1.119.0",
     "@types/react": "^18.2.66",
@@ -28,6 +31,7 @@
     "tailwindcss": "^3.4.18",
     "tslib": "^2.8.1",
     "typescript": "^5.6.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "vite-plugin-singlefile": "^2.3.0"
   }
 }

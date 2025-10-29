@@ -7,8 +7,9 @@
     "strict": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["vite/client"],
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
+  "include": ["./**/*.ts", "./**/*.tsx", "./env.d.ts"],
   "exclude": ["../src"]            // важно: не тянуть воркер в UI-конфиг
 }
