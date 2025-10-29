@@ -2,9 +2,9 @@ import React from 'react'
 import Header from './components/Header'
 import StatusBar from './components/StatusBar'
 import Results from './components/Results'
-import TokensPanel from './components/TokensPanel'
+import TokensPanel from './components/TokensPanel' // если используешь
 import type { ScanReport } from './lib/types'
-import { toSlack, toJira } from './lib/export'
+import { toSlack, toJira } from './lib/export'     // если используешь
 
 export default function App() {
   const [status, setStatus] = React.useState<'idle'|'scanning'|'done'|'error'>('idle')
@@ -34,12 +34,14 @@ export default function App() {
   const copyJira  = () => { if (report) navigator.clipboard.writeText(toJira(report)) }
 
   return (
-    <div className="min-h-screen bg-white text-[13px]">
+    <div className="min-h-full bg-gray-50">
       <Header onRun={runScan} onExport={exportJson} onSlack={copySlack} onJira={copyJira} />
-      <StatusBar status={status} totals={report?.totals} error={error} />
-      <Results report={report} />
-      <TokensPanel />
-      <div className="p-3 text-gray-400">v0.2.0 • Tokens + Tailwind + Slack/Jira</div>
+      <main className="max-h-[calc(100vh-48px)] overflow-auto">
+        <StatusBar status={status} totals={report?.totals} error={error} />
+        <Results report={report} />
+        {typeof TokensPanel !== 'undefined' && <TokensPanel />}
+        <div className="px-3 py-4 text-gray-400">v0.2.0 • Tailwind UI</div>
+      </main>
     </div>
   )
 }
