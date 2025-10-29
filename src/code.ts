@@ -47,18 +47,15 @@ figma.ui.onmessage = async (msg: any) => {
       }
 
       case 'EXPORT_JSON': {
-        const report: ScanReport = msg.payload?.report
-        if (!report) {
-          post('ERROR', { message: 'Нет данных для экспорта' })
-          return
-        }
+        const report: ScanReport = msg.payload && msg.payload.report
+        if (!report) { post('ERROR', { message: 'Нет данных для экспорта' }); return }
         await figma.clientStorage.setAsync('lastReport', JSON.stringify(report))
         post('EXPORTED', { ok: true })
         break
       }
 
       case 'LOAD_TOKENS': {
-        const json = msg.payload?.json as string
+        const json = msg.payload && (msg.payload.json as string)
         try {
           const parsed: DesignTokens = JSON.parse(json)
           await figma.clientStorage.setAsync('tokens', JSON.stringify(parsed))
