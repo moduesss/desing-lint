@@ -5,47 +5,69 @@ import { walk } from '../utils/traversal'
 import type { DesignTokens } from '../utils/tokens'
 import { normalizeHex } from '../utils/tokens'
 
-function solidFills(n: GeometryMixin): Paint[] {
+type EffectKind = { type: 'DROP_SHADOW' | 'INNER_SHADOW' | 'LAYER_BLUR' | 'BACKGROUND_BLUR' }
+type EffectLike = { effects?: ReadonlyArray<EffectKind>; effectStyleId?: string | typeof figma.mixed }
+type GeometryLike = { fills?: readonly Paint[]; fillStyleId?: string | typeof figma.mixed }
+type CornersLike = { cornerRadius: number | typeof figma.mixed }
+
+function solidFills(n: GeometryLike): SolidPaint[] {
   if (!n.fills || !Array.isArray(n.fills)) return []
-  return (n.fills as Paint[]).filter(f => f.type === 'SOLID')
+  return (n.fills as Paint[]).filter((f): f is SolidPaint => f.type === 'SOLID')
 }
 
-function paintToHex(p: SolidPaint): string | null {
+function paintToHex(p: SolidPaint): string {
   const { r, g, b } = p.color
   const to255 = (x: number) => Math.round(x * 255)
   const hex = (n: number) => n.toString(16).padStart(2, '0').toUpperCase()
   return `#${hex(to255(r))}${hex(to255(g))}${hex(to255(b))}`
 }
 
-function hasLocalFillWithoutStyle(n: GeometryMixin): boolean {
-  return solidFills(n).length > 0 && (!('fillStyleId' in n) || n.fillStyleId === '')
+function hasLocalFillWithoutStyle(n: GeometryLike): boolean {
+  return solidFills(n).length > 0 && (!('fillStyleId' in n) || n.fillStyleId === '' || n.fillStyleId === undefined)
 }
 
 function hasLocalTextStyle(t: TextNode): boolean {
   return t.textStyleId === '' || t.fillStyleId === ''
 }
 
-function hasLocalEffectWithoutStyle(n: EffectMixin): boolean {
-  return !!n.effects?.length && (!('effectStyleId' in n) || n.effectStyleId === '')
+function hasLocalEffectWithoutStyle(n: EffectLike): boolean {
+  const hasEff = Array.isArray(n.effects) && n.effects.length > 0
+  const hasId = n.effectStyleId !== '' && n.effectStyleId !== undefined
+  return hasEff && !hasId
 }
 
-function hasLocalCorner(n: CornerMixin): boolean {
-  const r = n.cornerRadius as number | typeof figma.mixed
+function hasLocalCorner(n: CornersLike): boolean {
+  const r = n.cornerRadius
   return typeof r === 'number' && r > 0
+}
+
+// Безопасно достаём семейство и кегль (учитывая figma.mixed)
+function getTextFamilyAndSize(t: TextNode): { family: string | null; size: number | null } {
+  let family: string | null = null
+  let size: number | null = null
+
+  const fn = t.fontName
+  if (fn !== figma.mixed && typeof fn === 'object' && 'family' in fn) {
+    family = (fn as FontName).family
+  }
+  const fs = t.fontSize
+  if (fs !== figma.mixed && typeof fs === 'number') {
+    size = fs
+  }
+  return { family, size }
 }
 
 export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTokens): Finding[] {
   const findings: Finding[] = []
-  const colorSet = new Set<string>(
-    Object.values(tokens?.colors ?? {}).map(normalizeHex)
-  )
+
+  const colorSet = new Set<string>(Object.values(tokens?.colors ?? {}).map(normalizeHex))
   const radiusSet = new Set<number>(Object.values(tokens?.radii ?? {}))
   const textArr = Object.values(tokens?.text ?? {})
 
   for (const page of root.children) {
     for (const node of walk(page)) {
-      // базовые проверки связности стилей
-      if ('fills' in node && hasLocalFillWithoutStyle(node as unknown as GeometryMixin)) {
+      // --- БАЗОВЫЕ ПРОВЕРКИ СВЯЗНОСТИ ---
+      if ('fills' in node && hasLocalFillWithoutStyle(node as unknown as GeometryLike)) {
         findings.push({
           id: `style:fill:${node.id}`,
           nodeId: node.id,
@@ -54,9 +76,10 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
           path: getNodePath(node),
           rule: 'unlinked-fill',
           message: 'Заливка без подключённого стиля',
-          severity: 'warn'
+          severity: 'warn',
         })
       }
+
       if (node.type === 'TEXT' && hasLocalTextStyle(node as TextNode)) {
         findings.push({
           id: `style:text:${node.id}`,
@@ -66,10 +89,11 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
           path: getNodePath(node),
           rule: 'unlinked-text-style',
           message: 'Текст без подключённых стилей (типографика/цвет)',
-          severity: 'warn'
+          severity: 'warn',
         })
       }
-      if ('effects' in node && hasLocalEffectWithoutStyle(node as unknown as EffectMixin)) {
+
+      if ('effects' in node && hasLocalEffectWithoutStyle(node as unknown as EffectLike)) {
         findings.push({
           id: `style:effect:${node.id}`,
           nodeId: node.id,
@@ -78,10 +102,11 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
           path: getNodePath(node),
           rule: 'unlinked-effect',
           message: 'Эффект (тень/блюр) без стиля',
-          severity: 'info'
+          severity: 'info',
         })
       }
-      if ('cornerRadius' in node && hasLocalCorner(node as unknown as CornerMixin)) {
+
+      if ('cornerRadius' in node && hasLocalCorner(node as unknown as CornersLike)) {
         findings.push({
           id: `style:corner:${node.id}`,
           nodeId: node.id,
@@ -90,16 +115,16 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
           path: getNodePath(node),
           rule: 'local-corner-radius',
           message: 'Локальный радиус скругления (проверьте соответствие токенам)',
-          severity: 'info'
+          severity: 'info',
         })
       }
 
-      // проверки на соответствие эталонам
+      // --- СРАВНЕНИЕ С ЭТАЛОННЫМИ ТОКЕНАМИ ---
       if (tokens && 'fills' in node) {
-        const solids = solidFills(node as unknown as GeometryMixin) as SolidPaint[]
+        const solids = solidFills(node as unknown as GeometryLike)
         for (const p of solids) {
-          const hex = paintToHex(p)
-          if (hex && colorSet.size && !colorSet.has(hex)) {
+          const hex = normalizeHex(paintToHex(p))
+          if (colorSet.size && !colorSet.has(hex)) {
             findings.push({
               id: `tokens:color:${node.id}:${hex}`,
               nodeId: node.id,
@@ -108,14 +133,14 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
               path: getNodePath(node),
               rule: 'color-not-in-tokens',
               message: `Цвет ${hex} отсутствует в токенах`,
-              severity: 'warn'
+              severity: 'warn',
             })
           }
         }
       }
 
       if (tokens && 'cornerRadius' in node) {
-        const r = (node as unknown as CornerMixin).cornerRadius as number | typeof figma.mixed
+        const r = (node as unknown as CornersLike).cornerRadius
         if (typeof r === 'number' && radiusSet.size && !radiusSet.has(r)) {
           findings.push({
             id: `tokens:radius:${node.id}:${r}`,
@@ -125,15 +150,22 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
             path: getNodePath(node),
             rule: 'radius-not-in-tokens',
             message: `Радиус ${r}px отсутствует в токенах`,
-            severity: 'warn'
+            severity: 'warn',
           })
         }
       }
 
       if (tokens && node.type === 'TEXT') {
-        const t = node as TextNode
-        const fontOk = textArr.length === 0 || textArr.some(tt => tt.fontFamily === t.fontName.family)
-        const sizeOk = textArr.length === 0 || textArr.some(tt => tt.fontSize === t.fontSize)
+        const { family, size } = getTextFamilyAndSize(node as TextNode)
+
+        const fontOk =
+          textArr.length === 0 ||
+          (family !== null && textArr.some(tt => tt.fontFamily === family))
+
+        const sizeOk =
+          textArr.length === 0 ||
+          (size !== null && textArr.some(tt => tt.fontSize === size))
+
         if (!fontOk || !sizeOk) {
           findings.push({
             id: `tokens:text:${node.id}`,
@@ -142,12 +174,13 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
             nodeType: node.type,
             path: getNodePath(node),
             rule: 'text-not-in-tokens',
-            message: `Типографика не соответствует токенам (семейство/кегль)`,
-            severity: 'warn'
+            message: 'Типографика не соответствует токенам (семейство/кегль)',
+            severity: 'warn',
           })
         }
       }
     }
   }
+
   return findings
 }
