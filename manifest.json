@@ -1,0 +1,11 @@
+{
+  "name": "Design Lint",
+  "id": "com.desinglint.plugin",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma", "figjam"],
+  "relaunchButtons": [
+    { "command": "scan", "name": "Run Design Lint" }
+  ]
+}

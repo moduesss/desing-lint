@@ -1,0 +1,33 @@
+{
+  "name": "desing-lint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rimraf dist && npm-run-all -p dev:ui dev:code",
+    "dev:ui": "vite --config vite.config.ts",
+    "dev:code": "node esbuild.config.mjs --watch",
+    "build": "rimraf dist && npm-run-all -p build:ui build:code",
+    "build:ui": "vite build --config vite.config.ts",
+    "build:code": "node esbuild.config.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.119.0",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.24.0",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.5.6",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^3.4.18",
+    "tslib": "^2.8.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.8"
+  }
+}
