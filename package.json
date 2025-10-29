@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "rimraf dist && npm-run-all -p dev:ui dev:code",
-    "dev:ui": "vite build --config vite.config.ts --watch",
+    "dev:ui": "vite build --config vite.config.ts --watch --mode development --sourcemap",
     "dev:code": "node esbuild.config.mjs --watch",
     "build": "rimraf dist && npm-run-all -p build:ui build:code",
     "build:ui": "vite build --config vite.config.ts",
