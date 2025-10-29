@@ -2,7 +2,9 @@ import React from 'react'
 import Header from './components/Header'
 import StatusBar from './components/StatusBar'
 import Results from './components/Results'
+import TokensPanel from './components/TokensPanel'
 import type { ScanReport } from './lib/types'
+import { toSlack, toJira } from './lib/export'
 
 export default function App() {
   const [status, setStatus] = React.useState<'idle'|'scanning'|'done'|'error'>('idle')
@@ -28,13 +30,16 @@ export default function App() {
     parent.postMessage({ pluginMessage: { type: 'EXPORT_JSON', payload: { report } } }, '*')
     navigator.clipboard.writeText(JSON.stringify(report, null, 2))
   }
+  const copySlack = () => { if (report) navigator.clipboard.writeText(toSlack(report)) }
+  const copyJira  = () => { if (report) navigator.clipboard.writeText(toJira(report)) }
 
   return (
     <div className="min-h-screen bg-white text-[13px]">
-      <Header onRun={runScan} onExport={exportJson} />
+      <Header onRun={runScan} onExport={exportJson} onSlack={copySlack} onJira={copyJira} />
       <StatusBar status={status} totals={report?.totals} error={error} />
       <Results report={report} />
-      <div className="p-3 text-gray-400">v0.1.0 • React + Vite • Tailwind-ready</div>
+      <TokensPanel />
+      <div className="p-3 text-gray-400">v0.2.0 • Tokens + Tailwind + Slack/Jira</div>
     </div>
   )
 }

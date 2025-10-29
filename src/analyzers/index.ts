@@ -1,17 +1,17 @@
 /// <reference types="@figma/plugin-typings" />
-
 import { findComponentNameDuplicates } from './duplicates'
 import { checkStyleInconsistencies } from './styles'
 import { checkLibraryLinks } from './library'
 import type { ScanReport, Finding } from '../utils/types'
+import type { DesignTokens } from '../utils/tokens'
 
-export async function runAllAnalyzers(): Promise<ScanReport> {
+export async function runAllAnalyzers(tokens?: DesignTokens): Promise<ScanReport> {
   const startedAt = Date.now()
   const doc = figma.root
 
   const buckets: Finding[] = []
   buckets.push(...findComponentNameDuplicates(doc))
-  buckets.push(...checkStyleInconsistencies(doc))
+  buckets.push(...checkStyleInconsistencies(doc, tokens))
   buckets.push(...checkLibraryLinks(doc))
 
   const totals = buckets.reduce(
