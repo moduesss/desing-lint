@@ -1,29 +1,26 @@
+// esbuild.config.mjs
 import esbuild from 'esbuild'
 
 const isWatch = process.argv.includes('--watch')
 
-/** @type {esbuild.BuildOptions} */
-const base = {
+const config = {
   entryPoints: ['src/code.ts'],
-  outfile: 'dist/code.js',
+  outfile: 'dist/code.js',      // ← ФАЙЛ, КОТОРЫЙ ЖДЁТ ФИГМА
   bundle: true,
-  format: 'iife',
   platform: 'browser',
   target: ['es2018'],
-  logLevel: 'info',
-  loader: { '.html': 'text' },
+  format: 'iife',
+  globalName: 'DesignLintWorker',
+  loader: { '.html': 'text' },  // чтобы импортировать inline-HTML как строку
   sourcemap: isWatch ? 'inline' : false,
-  define: { 'process.env.NODE_ENV': '"development"' },
-
-  // ВАЖНО: чтобы можно было `import uiHtml from '../dist/index.html'`
-  loader: { '.html': 'text' }
+  logLevel: 'info'
 }
 
 if (isWatch) {
-  const ctx = await esbuild.context(base)
+  const ctx = await esbuild.context(config)
   await ctx.watch()
-  console.log('[esbuild] watching code.ts → dist/code.js')
+  console.log('[esbuild] watching src/code.ts → dist/code.js')
 } else {
-  await esbuild.build(base)
-  console.log('[esbuild] built code.ts → dist/code.js')
+  await esbuild.build(config)
+  console.log('[esbuild] built dist/code.js')
 }

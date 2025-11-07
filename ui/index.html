@@ -7,7 +7,15 @@
   </head>
   <body>
     <div id="root">HTML loaded…</div>
-    <!-- обычный скрипт -->
-    <script src="./ui.js"></script>
+    <!-- внешний бандл -->
+  <script src="./ui.js"></script>
+
+  <!-- проверяем, выполнился ли код из ui.js -->
+  <script>
+    if (!window.__designlint_boot) {
+      document.getElementById('root').textContent = '⚠️ ui.js loaded, but did not run';
+      console.warn('[UI] ui.js tag inserted, but entry code did not run');
+    }
+  </script>
   </body>
 </html>

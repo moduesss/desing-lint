@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:ui": "vite build --config vite.config.ts --mode development --sourcemap && node -e \"const fs=require('fs');fs.copyFileSync('ui/index.html','dist/index.html')\"",
-    "dev": "rimraf dist && npm run prepare:ui && npm-run-all -p dev:ui dev:code",
-    "dev:ui": "vite build --config vite.config.ts --watch --mode development --sourcemap",
+    "prepare:ui": "vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs",
+    "prepare:code": "node esbuild.config.mjs",
+    "dev": "rimraf dist && npm run prepare:ui && npm run prepare:code && npm-run-all -p dev:ui dev:inline dev:code",
+    "dev:ui": "vite build --config vite.config.ts --watch --mode production",
+    "dev:inline": "node -e \"const{watch}=require('fs');watch('dist/ui.js',()=>require('child_process').spawn(process.execPath,['scripts/make-inline-ui.mjs'],{stdio:'inherit'}))\"",
     "dev:code": "node esbuild.config.mjs --watch",
-    "build": "rimraf dist && vite build --config vite.config.ts && node -e \"const fs=require('fs');fs.copyFileSync('ui/index.html','dist/index.html')\" && node esbuild.config.mjs"
+    "build": "rimraf dist && vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs && node esbuild.config.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

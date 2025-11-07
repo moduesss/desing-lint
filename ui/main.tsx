@@ -1,3 +1,5 @@
+;(window as any).__designlint_boot = true
+console.log('[UI] boot')
 import './tailwind.css'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
