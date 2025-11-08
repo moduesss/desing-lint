@@ -1,23 +1,28 @@
-import React from 'react'
+import React from 'react';
 
 type Props = {
-  onRun: () => void
-  onExport: () => void
-  onSlack: () => void
-  onJira: () => void
-}
-export default function Header({ onRun, onExport, onSlack, onJira }: Props) {
+  onRun: () => void;
+  onExport: () => void;
+  onCopySlack: () => void;
+  onCopyJira: () => void;
+  disabled?: boolean;
+};
+
+export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disabled }: Props) {
   return (
-    <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-200">
-      <div className="flex items-center justify-between px-3 py-2">
-        <div className="font-semibold text-gray-900">Design Lint</div>
-        <div className="flex items-center gap-2">
-          <button onClick={onRun} className="btn btn-primary">Run Scan</button>
-          <button onClick={onExport} className="btn">Export JSON</button>
-          <button onClick={onSlack} className="btn">Copy Slack</button>
-          <button onClick={onJira} className="btn">Copy Jira</button>
-        </div>
+    <div className="titlebar">
+      <div className="titlebar__title">
+        <span style={{ opacity: 0.9 }}>🧩</span>
+        <span>Design Lint</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+        <button className="btn btn--primary" onClick={onRun} disabled={disabled}>
+          {disabled ? 'Scanning…' : 'Run Scan'}
+        </button>
+        <button className="btn" onClick={onExport} disabled={disabled}>Export JSON</button>
+        <button className="btn" onClick={onCopySlack} disabled={disabled}>Copy Slack</button>
+        <button className="btn" onClick={onCopyJira} disabled={disabled}>Copy Jira</button>
       </div>
     </div>
-  )
+  );
 }

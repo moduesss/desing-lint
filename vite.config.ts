@@ -11,7 +11,9 @@ export default defineConfig(({ mode }) => {
   return {
     root: 'ui',
     base: './',
-    plugins: [react()],
+    plugins: [
+      react(),
+    ],
 
     // максимально упрощаем окружение
     define: {

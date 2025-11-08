@@ -1,6 +1,6 @@
 ;(window as any).__designlint_boot = true
 console.log('[UI] boot')
-import './tailwind.css'
+import './styles.scss'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
@@ -13,3 +13,4 @@ if (!rootEl) {
   rootEl.textContent = 'JS started' // мгновенно увидишь, что скрипт исполнился
   createRoot(rootEl).render(<App />)
 }
+

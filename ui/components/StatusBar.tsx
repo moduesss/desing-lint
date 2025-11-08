@@ -1,31 +1,60 @@
-import React from 'react'
+import React from 'react';
 
-type Props = {
-  status: 'idle'|'scanning'|'done'|'error'
-  totals?: { info: number; warn: number; error: number; all: number }
-  error?: string
-}
-export default function StatusBar({ status, totals, error }: Props) {
-  const label =
-    status === 'idle' ? 'Idle' :
-    status === 'scanning' ? 'Scanning…' :
-    status === 'done' ? 'Completed' : 'Error'
+type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
+type Totals = { total: number; errors: number; warns: number; infos: number };
 
+const ChipBtn = ({
+  label,
+  active = true,
+  onClick,
+  className = '',
+}: {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) => (
+  <button
+    className={`badge ${!active ? 'badge--muted' : ''} ${className}`}
+    onClick={onClick}
+    aria-pressed={active}
+    type="button"
+  >
+    {label}
+  </button>
+);
+
+export default function StatusBar({
+  status,
+  totals,
+  filter,
+  onClickTotal,
+  onClickError,
+  onClickWarn,
+  onClickInfo,
+}: {
+  status: ScanStatus;
+  totals: Totals;
+  filter: { error: boolean; warn: boolean; info: boolean };
+  onClickTotal: () => void;
+  onClickError: () => void;
+  onClickWarn: () => void;
+  onClickInfo: () => void;
+}) {
   return (
-    <div className="px-3 py-2 flex items-center justify-between">
-      <div className="text-gray-600">{label}</div>
-      {status === 'scanning' && (
-        <div className="badge animate-pulse">Идёт анализ…</div>
-      )}
-      {status === 'done' && totals && (
-        <div className="flex items-center gap-2 text-gray-600">
-          <span className="badge">Всего: {totals.all}</span>
-          <span className="badge">⚠︎ {totals.warn}</span>
-          <span className="badge">ⓘ {totals.info}</span>
-          <span className="badge">⛔ {totals.error}</span>
-        </div>
-      )}
-      {status === 'error' && <div className="text-red-600">{error}</div>}
+    <div className="statusbar">
+      <div style={{ fontWeight: 600 }}>
+        {status === 'idle' && 'Idle'}
+        {status === 'scanning' && 'Scanning…'}
+        {status === 'completed' && 'Completed'}
+        {status === 'error' && 'Error'}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ChipBtn label={`Всего: ${totals.total}`} onClick={onClickTotal} />
+        <ChipBtn className="badge--rose"  label={`${totals.errors} errors`} active={filter.error} onClick={onClickError} />
+        <ChipBtn className="badge--amber" label={`${totals.warns} warns`}  active={filter.warn}  onClick={onClickWarn} />
+        <ChipBtn label={`${totals.infos} info`} active={filter.info} onClick={onClickInfo} />
+      </div>
     </div>
-  )
+  );
 }
