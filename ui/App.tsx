@@ -1,75 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Header from './components/Header';
 import StatusBar from './components/StatusBar';
 import Results from './components/Results';
 import Spinner from './components/Spinner';
-import { groupByPageAndComponent } from './lib/grouping';
+import { groupByPageAndComponent } from './lib/utils/grouping';
+import { translations, type Lang, type Translation } from './lib/i18n/translations';
 import type { Finding } from './lib/types';
-import { translations, type Lang, type Translation } from './lib/translations';
+import { copyText } from './lib/utils/copy';
+import { initialTotals, type Totals } from './lib/plugin/types';
+import { usePluginMessages } from './lib/hooks/usePluginMessages';
 import './styles.scss';
 
-// Локальные типы — чтобы не зависеть от кеша TS
-type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
-type Totals = { total: number; errors: number; warns: number; infos: number };
-type PluginToUi =
-  | { type: 'STATUS'; status: ScanStatus }
-  | { type: 'RESULTS'; results: Finding[]; totals: Totals }
-  | { type: 'APPEND_LOG'; text: string };
-
-const initialTotals: Totals = { total: 0, errors: 0, warns: 0, infos: 0 };
-
-function copyText(text: string, fallbackMessage: string) {
-  try {
-    // Без navigator.clipboard — через скрытый textarea
-    const el = document.createElement('textarea');
-    el.value = text;
-    el.setAttribute('readonly', '');
-    el.style.position = 'absolute';
-    el.style.left = '-9999px';
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-  } catch {
-    alert(fallbackMessage);
-    // eslint-disable-next-line no-console
-    console.warn('[Design Lint] copy failed');
-  }
-}
-
 export default function App() {
-  const [status, setStatus] = useState<ScanStatus>('idle');
-  const [results, setResults] = useState<Finding[]>([]);
-  const [totals, setTotals] = useState<Totals>(initialTotals);
+  const { status, setStatus, results, setResults, totals, setTotals } = usePluginMessages(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
   const [collapsedPages, setCollapsedPages] = useState<Record<string, boolean>>({});
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
   const t: Translation = translations[lang];
 
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      const msg = (e.data || {}).pluginMessage as PluginToUi | undefined;
-      if (!msg) return;
-      switch (msg.type) {
-        case 'STATUS':
-          setStatus(msg.status);
-          break;
-        case 'RESULTS':
-          setResults(msg.results);
-          setTotals(msg.totals);
-          setCollapsedPages({});
-          break;
-        case 'APPEND_LOG':
-          // игнорируем в UI; логи разработчика скрыты
-          break;
-      }
-    };
-    (window as any).onmessage = handler;
-    return () => {
-      (window as any).onmessage = null;
-    };
-  }, []);
+  // сбрасываем свёрнутые страницы при каждом новом результате
+  React.useEffect(() => {
+    setCollapsedPages({});
+  }, [results]);
 
   const onRun = () => {
     if (status === 'scanning') return;

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Translation } from '../lib/translations';
+import type { Translation } from '../lib/i18n/translations';
 
 type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
 type Totals = { total: number; errors: number; warns: number; infos: number };

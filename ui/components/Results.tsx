@@ -1,8 +1,8 @@
 import React from 'react';
 import Collapsible from './collaps/Collapsible';
-import type { PageGroup } from '../lib/grouping';
+import type { PageGroup } from '../lib/utils/grouping';
 import type { Finding } from '../lib/types';
-import type { Translation } from '../lib/translations';
+import type { Translation } from '../lib/i18n/translations';
 
 type Props = {
   grouped: PageGroup[];
