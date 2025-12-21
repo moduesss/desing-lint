@@ -1,18 +1,20 @@
 # 🧩 Design Lint
 
 **Design Lint** is a Figma plugin that helps teams **maintain design‑system consistency**.
-It scans your file for unlinked colors, text styles, misnamed tokens, and duplicate components — and shows an actionable report right inside Figma.
+It scans your file for duplicate components, mixed styles, and instance issues — and shows a clear report right inside Figma.
 
 ---
 
 ## 🚀 Features
 
-* **Detect unlinked styles** — finds fills, strokes, and texts not using shared Paint/Text styles.
-* **Nearest‑match suggestions** — recommends the closest existing style for any inline color.
-* **Duplicate‑component finder** — flags components with identical names and dimensions.
-* **Naming audit** — validates Paint/Text style names via RegExp patterns (e.g. `^color/`, `^type/`).
-* **Instant navigation** — click any issue to select that node in the canvas.
-* **JSON export** — export the lint report for QA or automation pipelines.
+* **Duplicate component detection** — global by name; highlights the original and every duplicate.
+* **Mixed styles** — finds mixed fills, strokes, effects, fontName, textStyleId.
+* **Instance issues** — size mismatches with the master, detached instances.
+* **Grouped results** — page → component → findings; counters and quick filters by problem type.
+* **Navigation** — “Show” jumps to the node on the canvas.
+* **Exports** — JSON for automation, copy-friendly summaries for Slack/Jira.
+* **Bilingual UI** — EN/RU toggle in the header.
+* **Built‑in tips** — short rules and how to fix each class of issues.
 
 ---
 
@@ -20,35 +22,8 @@ It scans your file for unlinked colors, text styles, misnamed tokens, and duplic
 
 * **Figma Plugin API** (TypeScript)
 * **esbuild** — fast bundling & watch mode
-* **Vanilla HTML + CSS UI**
+* **Vite + React + SCSS UI**
 * **figma‑plugin‑typings** for IntelliSense
-
----
-
-## 🧩 Local Development
-
-```bash
-git clone https://github.com/yourusername/design-lint
-cd design-lint
-npm install
-npm run dev
-```
-
-Then open **Figma Desktop → Plugins → Development → Import plugin from manifest…** and select the folder containing `manifest.json`.
-
-Now open any Figma file and run:
-
-```
-Plugins → Development → Design Lint → Scan
-```
-
-### Available Scripts
-
-| Command         | Description                 |
-| --------------- | --------------------------- |
-| `npm run dev`   | Build and watch for changes |
-| `npm run build` | Production build            |
-| `npm run clean` | Remove `dist/` directory    |
 
 ---
 
