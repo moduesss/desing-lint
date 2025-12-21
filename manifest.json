@@ -1,6 +1,6 @@
 {
   "main": "dist/code.js",
-  "ui": "dist/index.html",
+  "ui": "dist/ui.html",
   "api": "1.0.0",
   "editorType": ["figma", "figjam"],
   "name": "Design Lint",

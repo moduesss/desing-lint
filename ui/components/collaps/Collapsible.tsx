@@ -7,11 +7,8 @@ export default function Collapsible({
   isOpen: boolean;
   children: React.ReactNode;
 }) {
-  return (
-    <div className="collapsible" style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}>
-      <div className="collapsible__body">
-        {children}
-      </div>
-    </div>
-  );
+  if (!isOpen) {
+    return null;
+  }
+  return <div className="collapsible">{children}</div>;
 }

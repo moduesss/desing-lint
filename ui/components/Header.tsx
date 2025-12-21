@@ -15,7 +15,7 @@ export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disab
         <span style={{ opacity: 0.9 }}>🧩</span>
         <span>Design Lint</span>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+      <div className="titlebar__controls">
         <button className="btn btn--primary" onClick={onRun} disabled={disabled}>
           {disabled ? 'Scanning…' : 'Run Scan'}
         </button>

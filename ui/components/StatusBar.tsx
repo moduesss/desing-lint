@@ -3,26 +3,15 @@ import React from 'react';
 type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
 type Totals = { total: number; errors: number; warns: number; infos: number };
 
-const ChipBtn = ({
-  label,
-  active = true,
-  onClick,
-  className = '',
-}: {
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-  className?: string;
-}) => (
-  <button
-    className={`badge ${!active ? 'badge--muted' : ''} ${className}`}
-    onClick={onClick}
-    aria-pressed={active}
-    type="button"
-  >
-    {label}
-  </button>
-);
+type Props = {
+  status: ScanStatus;
+  totals: Totals;
+  filter: { error: boolean; warn: boolean; info: boolean };
+  onClickTotal: () => void;
+  onClickError: () => void;
+  onClickWarn: () => void;
+  onClickInfo: () => void;
+};
 
 export default function StatusBar({
   status,
@@ -32,28 +21,29 @@ export default function StatusBar({
   onClickError,
   onClickWarn,
   onClickInfo,
-}: {
-  status: ScanStatus;
-  totals: Totals;
-  filter: { error: boolean; warn: boolean; info: boolean };
-  onClickTotal: () => void;
-  onClickError: () => void;
-  onClickWarn: () => void;
-  onClickInfo: () => void;
-}) {
+}: Props) {
   return (
     <div className="statusbar">
-      <div style={{ fontWeight: 600 }}>
-        {status === 'idle' && 'Idle'}
-        {status === 'scanning' && 'Scanning…'}
-        {status === 'completed' && 'Completed'}
-        {status === 'error' && 'Error'}
+      <div className="statusbar__left">
+        <strong>Всего:</strong>
+        <button className="pill" onClick={onClickTotal} aria-pressed={filter.error && filter.warn && filter.info}>
+          {totals.total}
+        </button>
+        <button className={`pill pill--err ${filter.error ? '' : 'pill--off'}`} onClick={onClickError}>
+          {totals.errors} errors
+        </button>
+        <button className={`pill pill--warn ${filter.warn ? '' : 'pill--off'}`} onClick={onClickWarn}>
+          {totals.warns} warns
+        </button>
+        <button className={`pill pill--info ${filter.info ? '' : 'pill--off'}`} onClick={onClickInfo}>
+          {totals.infos} info
+        </button>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <ChipBtn label={`Всего: ${totals.total}`} onClick={onClickTotal} />
-        <ChipBtn className="badge--rose"  label={`${totals.errors} errors`} active={filter.error} onClick={onClickError} />
-        <ChipBtn className="badge--amber" label={`${totals.warns} warns`}  active={filter.warn}  onClick={onClickWarn} />
-        <ChipBtn label={`${totals.infos} info`} active={filter.info} onClick={onClickInfo} />
+      <div className="statusbar__right">
+        {status === 'idle' && <span>Ничего не найдено. Нажми Run Scan.</span>}
+        {status === 'scanning' && <span>Scanning…</span>}
+        {status === 'completed' && <span>Completed</span>}
+        {status === 'error' && <span style={{ color: '#c00' }}>Error</span>}
       </div>
     </div>
   );

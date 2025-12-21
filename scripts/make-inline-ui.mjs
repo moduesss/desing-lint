@@ -1,50 +1,39 @@
 // scripts/make-inline-ui.mjs
-import fs from 'node:fs'
-import path from 'node:path'
+// Build a single inline HTML string for figma.showUI by embedding dist/ui.js
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const distDir = path.resolve('dist')
-const jsPath  = path.join(distDir, 'ui.js')
-const outHtml = path.join(distDir, 'index.html')
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const distDir = resolve(__dirname, '..', 'dist')
+const uiJsPath = resolve(distDir, 'ui.js')
+const uiCssPath = resolve(distDir, 'style.css')
+const uiHtmlPath = resolve(distDir, 'ui.html')
 
-// 1) читаем ui.js из Vite
-if (!fs.existsSync(jsPath)) {
-  console.error('[make-inline-ui] dist/ui.js not found. Run Vite build first.')
-  process.exit(1)
+const js = await readFile(uiJsPath, 'utf8')
+const sanitizedJs = js.replaceAll('</script>', '<\\/script>')
+
+let css = ''
+try {
+  css = await readFile(uiCssPath, 'utf8')
+} catch {
+  console.warn('[inline-ui] dist/style.css not found, continuing without inline CSS')
 }
-let js = fs.readFileSync(jsPath, 'utf8')
 
-// 2) подчистим import.meta (на всякий)
-js = js.replace(/\bimport\.meta(\.env|\.(url))?/g, '({})')
-
-// 3) гарантированно оборачиваем в IIFE (если вдруг не обернут)
-function ensureIIFE(code) {
-  const t = code.trimStart()
-  const starts = t.slice(0, 2)
-  const already = starts === '((' || starts === '!(' || starts === '+(' || starts === '~('
-  return already ? code : `(function(){\n${code}\n})();`
-}
-js = ensureIIFE(js)
-
-// 4) собираем минимальный, заведомо корректный HTML
-const html =
-  `<!doctype html>
+const html = `<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Design Lint</title>
-    <style>
-      /* мини-стаб чтобы видеть, что HTML жив */
-      html,body,#root{height:100%} body{margin:0;font:14px Inter,system-ui,Arial}
-    </style>
-  </head>
-  <body>
-    <div id="root">HTML loaded…</div>
-    <script>
-${js}
-    </script>
-  </body>
-</html>`
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ${css ? `<style>${css}</style>` : ''}
+</head>
+<body>
+  <div id="root"></div>
+  <script>${sanitizedJs}</script>
+</body>
+</html>
+`
 
-fs.writeFileSync(outHtml, html)
-console.log('[make-inline-ui] wrote', outHtml)
+await mkdir(distDir, { recursive: true })
+await writeFile(uiHtmlPath, html, 'utf8')
+console.log(`[inline-ui] wrote ${uiHtmlPath}`)

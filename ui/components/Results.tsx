@@ -1,22 +1,47 @@
 import React from 'react';
-import type { Finding } from '../lib/types';
 import Collapsible from './collaps/Collapsible';
+import type { PageGroup } from '../lib/grouping';
+import type { Finding } from '../lib/types';
 
-export type GroupedByPage = Record<string, Finding[]>;
-
-export default function Results({
-  grouped,
-  collapsedPages,
-  onTogglePage,
-  onHighlight,
-  isEmpty,
-}: {
-  grouped: GroupedByPage;
+type Props = {
+  grouped: PageGroup[];
   collapsedPages: Record<string, boolean>;
   onTogglePage: (page: string) => void;
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
-}) {
+};
+
+const severityHint: Record<string, string> = {
+  error: 'Критично, нужно исправить',
+  warn: 'Требует внимания',
+  info: 'Для информации',
+};
+
+function ComponentHeader({ name, findings, items }: { name: string; findings: number; items: Finding[] }) {
+  const stats = items.reduce(
+    (acc, f) => {
+      acc[f.severity as 'error' | 'warn' | 'info']++;
+      return acc;
+    },
+    { error: 0, warn: 0, info: 0 }
+  );
+
+  return (
+    <div className="component__header">
+      <div>
+        <div className="component__title">{name}</div>
+        <div className="component__count">Найдено: {findings}</div>
+      </div>
+      <div className="component__stats">
+        {stats.error ? <span className="chip chip--rose">{stats.error} errors</span> : null}
+        {stats.warn ? <span className="chip chip--amber">{stats.warn} warnings</span> : null}
+        {stats.info ? <span className="chip chip--muted">{stats.info} info</span> : null}
+      </div>
+    </div>
+  );
+}
+
+export default function Results({ grouped, collapsedPages, onTogglePage, onHighlight, isEmpty }: Props) {
   if (isEmpty) {
     return (
       <div className="empty">
@@ -25,14 +50,11 @@ export default function Results({
     );
   }
 
-  const pages = Object.keys(grouped);
-
   return (
     <div className="results">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {pages.map((page) => {
-          const list = grouped[page]!;
-          const count = list.length;
+      <div className="stack">
+        {grouped.map(({ page, components }) => {
+          const count = components.reduce((acc, c) => acc + c.findings.length, 0);
           const isCollapsed = !!collapsedPages[page];
 
           return (
@@ -53,35 +75,39 @@ export default function Results({
               </button>
 
               <Collapsible isOpen={!isCollapsed}>
-                <ul>
-                  {list.map((f) => {
-                    const comp = (f as { component?: string }).component;
-                    const sevClass =
-                      f.severity === 'error' ? 'badge badge--rose'
-                      : f.severity === 'warn' ? 'badge badge--amber'
-                      : 'badge';
+                <div className="component-list">
+                  {components.map((group) => (
+                    <div key={group.name} className="component">
+                      <ComponentHeader name={group.name} findings={group.findings.length} items={group.findings} />
+                      <ul className="component__findings">
+                        {group.findings.map((f) => {
+                          const sevClass =
+                            f.severity === 'error' ? 'badge badge--rose'
+                            : f.severity === 'warn' ? 'badge badge--amber'
+                            : 'badge';
 
-                    return (
-                      <li key={f.id} className="result__line">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                          <div style={{ minWidth: 0 }}>
-                            <div className="result__title">{f.message}</div>
-                            <div className="result__meta">
-                              {comp ? <span className="badge">COMPONENT • {comp}</span> : null}
-                              {f.path ? <span className="badge">{f.path}</span> : null}
-                              <span className={sevClass} style={{ textTransform: 'uppercase' }}>{f.severity}</span>
-                            </div>
-                          </div>
-                          {f.nodeId && (
-                            <button className="btn" onClick={() => onHighlight(f.nodeId!)}>
-                              Show
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                          return (
+                            <li key={f.id} className="result__line">
+                              <div className="result__body">
+                                <div className="result__title">{f.message}</div>
+                                <div className="result__hint">{severityHint[f.severity]}</div>
+                                <div className="result__meta">
+                                  {f.path ? <span className="badge badge--muted">{f.path}</span> : null}
+                                  <span className={sevClass}>{f.severity}</span>
+                                </div>
+                              </div>
+                              {f.nodeId && (
+                                <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId)}>
+                                  Показать
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
               </Collapsible>
             </div>
           );
