@@ -15,11 +15,11 @@ type Props = {
 export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disabled, lang, onLangChange, labels }: Props) {
   return (
     <div className="titlebar">
-      <div className="titlebar__title">
-        <span style={{ opacity: 0.9 }}>🧩</span>
-        <span>Design Lint</span>
-      </div>
-      <div className="titlebar__controls">
+      <div className="titlebar__head">
+        <div className="titlebar__title">
+          <span style={{ opacity: 0.9 }}>🧩</span>
+          <span>Design Lint</span>
+        </div>
         <div className="langswitch">
           <button
             className={`langswitch__btn ${lang === 'en' ? 'langswitch__btn--active' : ''}`}
@@ -36,6 +36,9 @@ export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disab
             RU
           </button>
         </div>
+      </div>
+
+      <div className="titlebar__controls">
         <button className="btn btn--primary" onClick={onRun} disabled={disabled}>
           {labels.runScan}
         </button>
