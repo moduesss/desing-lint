@@ -47,14 +47,43 @@ figma.ui.onmessage = async (msg: UiToPlugin) => {
   }
   if (msg.type === 'HIGHLIGHT') {
     try {
-      const node = figma.getNodeById(msg.nodeId);
-      if (node) {
+      if (typeof (figma as any).loadAllPagesAsync === 'function') {
+        await (figma as any).loadAllPagesAsync();
+      }
+      const node = typeof (figma as any).getNodeByIdAsync === 'function'
+        ? await (figma as any).getNodeByIdAsync(msg.nodeId)
+        : figma.getNodeById(msg.nodeId);
+      if (!node) {
+        figma.notify('Node not found (already deleted?)');
+        return;
+      }
+
+      // вычисляем страницу узла
+      let page: BaseNode | null = node;
+      while (page && page.type !== 'PAGE') {
+        page = page.parent;
+      }
+      if (!page || page.type !== 'PAGE') {
+        figma.notify('Cannot highlight this node');
+        return;
+      }
+
+      if (typeof (page as any).loadAsync === 'function') {
+        await (page as any).loadAsync();
+      }
+      if (figma.currentPage !== page) {
+        figma.currentPage = page;
+      }
+
+      try {
         figma.currentPage.selection = [node as SceneNode];
         figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
-      } else {
-        figma.notify('Node not found (already deleted?)');
+      } catch (err) {
+        log('Highlight failed', pathOf(node), String(err));
+        figma.notify('Cannot highlight this node');
       }
-    } catch {
+    } catch (err) {
+      log('Highlight failed', String(err));
       figma.notify('Cannot highlight this node');
     }
   }
@@ -149,7 +178,8 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
   }
 
   // 2) Несоответствия стилей (миксы)
-  figma.root.findAll(n => true).forEach(n => {
+  const allNodes = figma.root.findAll(n => true);
+  for (const n of allNodes) {
     try {
       const asAny = n as any;
 
@@ -216,18 +246,22 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
         }
       }
       if (n.type === 'INSTANCE') {
-        if (n.mainComponent) {
-          if (Math.round(n.width) !== Math.round(n.mainComponent.width) ||
-              Math.round(n.height) !== Math.round(n.mainComponent.height)) {
+        const main = typeof n.getMainComponentAsync === 'function'
+          ? await n.getMainComponentAsync()
+          : n.mainComponent;
+
+        if (main) {
+          if (Math.round(n.width) !== Math.round(main.width) ||
+              Math.round(n.height) !== Math.round(main.height)) {
             push({
               severity: 'info',
               rule: 'instance-size',
               message: [
-                `Экземпляр отличается по размеру от master-компонента "${n.mainComponent.name}".`,
+                `Экземпляр отличается по размеру от master-компонента "${main.name}".`,
                 'Размеры инстансов должны совпадать с master, иначе они легко “ломают” макет.',
               ].join('\n'),
               path: pathOf(n),
-              component: n.mainComponent.name,
+              component: main.name,
               nodeId: n.id,
             });
           }
@@ -247,7 +281,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
     } catch (err) {
       log('Node scan failed', pathOf(n), String(err));
     }
-  });
+  }
 
   // 3) Подсчёт тоталов
   const totals: Totals = { total: findings.length, errors: 0, warns: 0, infos: 0 };

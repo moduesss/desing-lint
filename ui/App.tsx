@@ -85,7 +85,24 @@ export default function App() {
     });
   }, [results, filter, ruleFilter]);
 
-  const grouped = useMemo(() => groupByPageAndComponent(filtered), [filtered]);
+  const ordered = useMemo(() => {
+    const priority = (rule: string | undefined) =>
+      rule === 'duplicate' ? 0
+      : rule === 'mixed-style' ? 1
+      : rule?.startsWith('instance-') ? 2
+      : 3;
+    return filtered
+      .map((item, idx) => ({ item, idx }))
+      .sort((a, b) => {
+        const pa = priority((a.item as any).rule);
+        const pb = priority((b.item as any).rule);
+        if (pa !== pb) return pa - pb;
+        return a.idx - b.idx; // стабильность внутри rule
+      })
+      .map(({ item }) => item);
+  }, [filtered]);
+
+  const grouped = useMemo(() => groupByPageAndComponent(ordered), [ordered]);
 
   const toggleCounter = (key: 'error' | 'warn' | 'info') =>
     setFilter((f) => ({ ...f, [key]: !f[key] }));
