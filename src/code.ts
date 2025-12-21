@@ -91,6 +91,11 @@ async function runScan() {
 }
 
 async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
+  // Ensure all pages are loaded before scanning (required for documentAccess: dynamic-page)
+  if (typeof (figma as any).loadAllPagesAsync === 'function') {
+    await (figma as any).loadAllPagesAsync();
+  }
+
   const findings: Finding[] = [];
   const push = (f: Omit<Finding, 'id'>) => {
     findings.push(Object.assign({ id: String(findings.length + 1) }, f));
@@ -131,7 +136,11 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
       push({
         severity: 'warn',
         rule: 'duplicate',
-        message: `Компонент является дубликатом.\nОригинал создан раньше и находится на странице "${original.parent?.name || 'Unknown'}".`,
+        message: [
+          'Компонент является дубликатом.',
+          'Дубликаты расходятся с оригиналом и усложняют поддержку дизайн-системы со временем.',
+          `Оригинал создан раньше и находится на странице "${original.parent?.name || 'Unknown'}".`,
+        ].join('\n'),
         path: pathOf(dup),
         component: name,
         nodeId: dup.id,
@@ -141,77 +150,102 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
 
   // 2) Несоответствия стилей (миксы)
   figma.root.findAll(n => true).forEach(n => {
-    const asAny = n as any;
+    try {
+      const asAny = n as any;
 
-    if ('fills' in asAny && asAny.fills === figma.mixed) {
-      push({
-        severity: 'warn',
-        rule: 'mixed-style',
-        message: 'Смешанные заливки (fills = mixed)',
-        path: pathOf(n),
-        nodeId: n.id,
-      });
-    }
-    if ('strokes' in asAny && asAny.strokes === figma.mixed) {
-      push({
-        severity: 'warn',
-        rule: 'mixed-style',
-        message: 'Смешанные обводки (strokes = mixed)',
-        path: pathOf(n),
-        nodeId: n.id,
-      });
-    }
-    if ('effects' in asAny && asAny.effects === figma.mixed) {
-      push({
-        severity: 'warn',
-        rule: 'mixed-style',
-        message: 'Смешанные эффекты (effects = mixed)',
-        path: pathOf(n),
-        nodeId: n.id,
-      });
-    }
-    if (n.type === 'TEXT') {
-      if (n.fontName === figma.mixed) {
+      if ('fills' in asAny && asAny.fills === figma.mixed) {
         push({
           severity: 'warn',
           rule: 'mixed-style',
-          message: 'Смешанные шрифты (fontName = mixed)',
+          message: [
+            'Смешанные заливки (fills = mixed).',
+            'Такой слой собран из разных стилей/цветов, его сложно синхронизировать и переиспользовать.',
+          ].join('\n'),
           path: pathOf(n),
           nodeId: n.id,
         });
       }
-      if (n.textStyleId === figma.mixed) {
+      if ('strokes' in asAny && asAny.strokes === figma.mixed) {
         push({
           severity: 'warn',
           rule: 'mixed-style',
-          message: 'Смешанный текстовый стиль (textStyleId = mixed)',
+          message: [
+            'Смешанные обводки (strokes = mixed).',
+            'Несогласованные границы могут по-разному выглядеть и ломать единообразие компонентов.',
+          ].join('\n'),
           path: pathOf(n),
           nodeId: n.id,
         });
       }
-    }
-    if (n.type === 'INSTANCE') {
-      if (n.mainComponent) {
-        if (Math.round(n.width) !== Math.round(n.mainComponent.width) ||
-            Math.round(n.height) !== Math.round(n.mainComponent.height)) {
+      if ('effects' in asAny && asAny.effects === figma.mixed) {
+        push({
+          severity: 'warn',
+          rule: 'mixed-style',
+          message: [
+            'Смешанные эффекты (effects = mixed).',
+            'Разные эффекты в одном слое ведут к непредсказуемому виду и мешают поддержке стилей.',
+          ].join('\n'),
+          path: pathOf(n),
+          nodeId: n.id,
+        });
+      }
+      if (n.type === 'TEXT') {
+        if (n.fontName === figma.mixed) {
           push({
-            severity: 'info',
-            rule: 'instance-size',
-            message: `Экземпляр отличается по размеру от master-компонента "${n.mainComponent.name}"`,
+            severity: 'warn',
+            rule: 'mixed-style',
+            message: [
+              'Смешанные шрифты (fontName = mixed).',
+              'Текст собран из разных шрифтов, его сложно синхронизировать и поддерживать.',
+            ].join('\n'),
             path: pathOf(n),
-            component: n.mainComponent.name,
             nodeId: n.id,
           });
         }
-      } else {
-        push({
-          severity: 'info',
-          rule: 'instance-detached',
-          message: 'Instance не привязан к библиотеке (detached?)',
-          path: pathOf(n),
-          nodeId: n.id,
-        });
+        if (n.textStyleId === figma.mixed) {
+          push({
+            severity: 'warn',
+            rule: 'mixed-style',
+            message: [
+              'Смешанный текстовый стиль (textStyleId = mixed).',
+              'Несогласованные текстовые стили ломают единообразие типографики и усложняют редизайн.',
+            ].join('\n'),
+            path: pathOf(n),
+            nodeId: n.id,
+          });
+        }
       }
+      if (n.type === 'INSTANCE') {
+        if (n.mainComponent) {
+          if (Math.round(n.width) !== Math.round(n.mainComponent.width) ||
+              Math.round(n.height) !== Math.round(n.mainComponent.height)) {
+            push({
+              severity: 'info',
+              rule: 'instance-size',
+              message: [
+                `Экземпляр отличается по размеру от master-компонента "${n.mainComponent.name}".`,
+                'Размеры инстансов должны совпадать с master, иначе они легко “ломают” макет.',
+              ].join('\n'),
+              path: pathOf(n),
+              component: n.mainComponent.name,
+              nodeId: n.id,
+            });
+          }
+        } else {
+          push({
+            severity: 'info',
+            rule: 'instance-detached',
+            message: [
+              'Экземпляр не привязан к библиотеке.',
+              'Отвязанные инстансы перестают получать обновления и могут устаревать.',
+            ].join('\n'),
+            path: pathOf(n),
+            nodeId: n.id,
+          });
+        }
+      }
+    } catch (err) {
+      log('Node scan failed', pathOf(n), String(err));
     }
   });
 
