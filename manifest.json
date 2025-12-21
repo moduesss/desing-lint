@@ -4,6 +4,7 @@
   "api": "1.0.0",
   "editorType": ["figma", "figjam"],
   "name": "Design Lint",
-  "id": "com.desinglint.plugin",
-  "networkAccess": { "allowedDomains": ["https://static.figma.com"] }
+  "id": "1584658705318845644",
+  "networkAccess": { "allowedDomains": ["https://static.figma.com"] },
+  "documentAccess": "dynamic-page"
 }
