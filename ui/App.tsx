@@ -5,7 +5,7 @@ import Results from './components/Results';
 import Spinner from './components/Spinner';
 import { groupByPageAndComponent } from './lib/grouping';
 import type { Finding } from './lib/types';
-import { translations, type Lang } from './lib/translations';
+import { translations, type Lang, type Translation } from './lib/translations';
 import './styles.scss';
 
 // Локальные типы — чтобы не зависеть от кеша TS
@@ -32,6 +32,8 @@ function copyText(text: string, fallbackMessage: string) {
     document.body.removeChild(el);
   } catch {
     alert(fallbackMessage);
+    // eslint-disable-next-line no-console
+    console.warn('[Design Lint] copy failed');
   }
 }
 
@@ -41,13 +43,12 @@ export default function App() {
   const [totals, setTotals] = useState<Totals>(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
   const [collapsedPages, setCollapsedPages] = useState<Record<string, boolean>>({});
-  const [lang, setLang] = useState<Lang>(() =>
-    typeof navigator !== 'undefined' && navigator.language?.startsWith('ru') ? 'ru' : 'en'
-  );
-  const t = translations[lang];
+  const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
+  const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
+  const t: Translation = translations[lang];
 
   useEffect(() => {
-    (window as any).onmessage = (e: MessageEvent) => {
+    const handler = (e: MessageEvent) => {
       const msg = (e.data || {}).pluginMessage as PluginToUi | undefined;
       if (!msg) return;
       switch (msg.type) {
@@ -63,6 +64,10 @@ export default function App() {
           // игнорируем в UI; логи разработчика скрыты
           break;
       }
+    };
+    (window as any).onmessage = handler;
+    return () => {
+      (window as any).onmessage = null;
     };
   }, []);
 
@@ -161,7 +166,7 @@ export default function App() {
             onClickInfo={() => toggleCounter('info')}
             onClickTotal={toggleAll}
             labels={{
-              total: t.totals,
+              totals: t.totals,
               errors: t.errors,
               warns: t.warns,
               info: t.info,

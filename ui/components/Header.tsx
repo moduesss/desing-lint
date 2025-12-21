@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Lang } from '../lib/translations';
 
 type Props = {
   onRun: () => void;
@@ -6,8 +7,8 @@ type Props = {
   onCopySlack: () => void;
   onCopyJira: () => void;
   disabled?: boolean;
-  lang: 'en' | 'ru';
-  onLangChange: (lang: 'en' | 'ru') => void;
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
   labels: { runScan: string; exportJson: string; copySlack: string; copyJira: string };
 };
 

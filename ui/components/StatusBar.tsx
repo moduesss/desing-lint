@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translation } from '../lib/translations';
 
 type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
 type Totals = { total: number; errors: number; warns: number; infos: number };
@@ -11,16 +12,7 @@ type Props = {
   onClickError: () => void;
   onClickWarn: () => void;
   onClickInfo: () => void;
-  labels: {
-    total: string;
-    errors: string;
-    warns: string;
-    info: string;
-    statusIdle: string;
-    statusScanning: string;
-    statusCompleted: string;
-    statusError: string;
-  };
+  labels: Pick<Translation, 'totals' | 'errors' | 'warns' | 'info' | 'statusIdle' | 'statusScanning' | 'statusCompleted' | 'statusError'>;
 };
 
 export default function StatusBar({
@@ -36,7 +28,7 @@ export default function StatusBar({
   return (
     <div className="statusbar">
       <div className="statusbar__left">
-        <strong>{labels.total}</strong>
+        <strong>{labels.totals}</strong>
         <button className="pill" onClick={onClickTotal} aria-pressed={filter.error && filter.warn && filter.info}>
           {totals.total}
         </button>

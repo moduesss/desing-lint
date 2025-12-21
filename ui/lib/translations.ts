@@ -1,6 +1,4 @@
-export type Lang = 'en' | 'ru';
-
-export const translations: Record<Lang, any> = {
+export const translations = {
   en: {
     langLabel: 'Language',
     runScan: 'Run Scan',
@@ -61,4 +59,7 @@ export const translations: Record<Lang, any> = {
     severity: { error: 'Критично, нужно исправить', warn: 'Требует внимания', info: 'Для информации' },
     copyFail: 'Не удалось скопировать. Выделите текст вручную.',
   },
-};
+} as const;
+
+export type Lang = keyof typeof translations;
+export type Translation = (typeof translations)[Lang];

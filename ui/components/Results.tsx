@@ -2,6 +2,7 @@ import React from 'react';
 import Collapsible from './collaps/Collapsible';
 import type { PageGroup } from '../lib/grouping';
 import type { Finding } from '../lib/types';
+import type { Translation } from '../lib/translations';
 
 type Props = {
   grouped: PageGroup[];
@@ -9,15 +10,7 @@ type Props = {
   onTogglePage: (page: string) => void;
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
-  labels: {
-    empty: string;
-    found: string;
-    show: string;
-    severityHint: Record<string, string>;
-    errors: string;
-    warns: string;
-    info: string;
-  };
+  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info'> & { severityHint: Translation['severity'] };
 };
 
 function ComponentHeader({
