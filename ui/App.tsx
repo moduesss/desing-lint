@@ -3,6 +3,7 @@ import Header from './components/Header';
 import StatusBar from './components/StatusBar';
 import Results from './components/Results';
 import Spinner from './components/Spinner';
+import QuickFilters, { type RuleFilter } from './components/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
 import type { Finding } from './lib/types';
@@ -14,6 +15,7 @@ import './styles.scss';
 export default function App() {
   const { status, setStatus, results, setResults, totals, setTotals } = usePluginMessages(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
+  const [ruleFilter, setRuleFilter] = useState<RuleFilter>({ duplicate: true, mixed: true, instance: true });
   const [collapsedPages, setCollapsedPages] = useState<Record<string, boolean>>({});
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
@@ -61,13 +63,27 @@ export default function App() {
   }, [results, totals]);
 
   const filtered = useMemo(() => {
-    return results.filter(
-      (r) =>
+    return results.filter((r) => {
+      const bySeverity =
         (r.severity === 'error' && filter.error) ||
         (r.severity === 'warn' && filter.warn) ||
-        (r.severity === 'info' && filter.info)
-    );
-  }, [results, filter]);
+        (r.severity === 'info' && filter.info);
+
+      const rule = (r as any).rule as string | undefined;
+      const ruleKey =
+        rule === 'duplicate' ? 'duplicate'
+        : rule === 'mixed-style' ? 'mixed'
+        : rule === 'instance-size' || rule === 'instance-detached' ? 'instance'
+        : 'other';
+      const byRule =
+        ruleKey === 'other' ? true
+        : ruleKey === 'duplicate' ? ruleFilter.duplicate
+        : ruleKey === 'mixed' ? ruleFilter.mixed
+        : ruleFilter.instance;
+
+      return bySeverity && byRule;
+    });
+  }, [results, filter, ruleFilter]);
 
   const grouped = useMemo(() => groupByPageAndComponent(filtered), [filtered]);
 
@@ -82,6 +98,14 @@ export default function App() {
 
   const togglePage = (page: string) =>
     setCollapsedPages((s) => ({ ...s, [page]: !s[page] }));
+
+  const toggleRule = (key: keyof RuleFilter) =>
+    setRuleFilter((f) => ({ ...f, [key]: !f[key] }));
+
+  const toggleRulesAll = () => {
+    const allOn = ruleFilter.duplicate && ruleFilter.mixed && ruleFilter.instance;
+    setRuleFilter(allOn ? { duplicate: false, mixed: false, instance: false } : { duplicate: true, mixed: true, instance: true });
+  };
 
   return (
     <div className="app">
@@ -131,6 +155,19 @@ export default function App() {
           />
         </div>
 
+        <QuickFilters
+          filter={ruleFilter}
+          onToggleAll={toggleRulesAll}
+          onToggle={toggleRule}
+          labels={{
+            quickFilters: t.quickFilters,
+            filterAll: t.filterAll,
+            filterDuplicates: t.filterDuplicates,
+            filterMixed: t.filterMixed,
+            filterInstances: t.filterInstances,
+          }}
+        />
+
         {status === 'scanning' && (
           <div className="panel notice" role="status" aria-live="polite">
             <Spinner />
@@ -140,6 +177,13 @@ export default function App() {
             </div>
           </div>
         )}
+
+        <div className="panel docs">
+          <div className="eyebrow">{t.docsTitle}</div>
+          <ul className="rules rules--compact">
+            {t.docs.map((text: string, i: number) => <li key={i}>{text}</li>)}
+          </ul>
+        </div>
 
         <Results
           grouped={grouped}

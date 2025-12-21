@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["@figma/plugin-typings"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "ui/**/*.ts", "ui/**/*.tsx"]
 }

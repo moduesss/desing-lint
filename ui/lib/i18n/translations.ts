@@ -28,6 +28,17 @@ export const translations = {
     show: 'Show',
     severity: { error: 'Critical, fix', warn: 'Needs attention', info: 'For your information' },
     copyFail: 'Copy failed. Please copy manually.',
+    quickFilters: 'Quick filters',
+    filterAll: 'All types',
+    filterDuplicates: 'Duplicates',
+    filterMixed: 'Mixed styles',
+    filterInstances: 'Instances',
+    docsTitle: 'Rules and how to fix',
+    docs: [
+      'Duplicates: keep only one master per name, rest should be instances.',
+      'Mixed styles: reset mixed fills/strokes/effects or apply a single style.',
+      'Instances: align size with master or relink to library if detached.',
+    ],
   },
   ru: {
     langLabel: 'Язык',
@@ -58,6 +69,17 @@ export const translations = {
     show: 'Показать',
     severity: { error: 'Критично, нужно исправить', warn: 'Требует внимания', info: 'Для информации' },
     copyFail: 'Не удалось скопировать. Выделите текст вручную.',
+    quickFilters: 'Быстрые фильтры',
+    filterAll: 'Все типы',
+    filterDuplicates: 'Дубликаты',
+    filterMixed: 'Mixed-стили',
+    filterInstances: 'Инстансы',
+    docsTitle: 'Правила и как чинить',
+    docs: [
+      'Дубликаты: оставьте один мастер на имя, остальные — инстансы.',
+      'Mixed-стили: сбросьте смешанные fills/strokes/effects или примените единый стиль.',
+      'Инстансы: выровняйте размеры с master или перепривяжите к библиотеке, если отвязан.',
+    ],
   },
 } as const;
 

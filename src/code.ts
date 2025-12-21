@@ -9,6 +9,7 @@ type Finding = {
   id: string;
   severity: Severity;
   message: string;
+  rule?: 'duplicate' | 'mixed-style' | 'instance-size' | 'instance-detached';
   path?: string;
   component?: string;
   nodeId?: string;
@@ -129,6 +130,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
     for (const dup of dups) {
       push({
         severity: 'warn',
+        rule: 'duplicate',
         message: `Компонент является дубликатом.\nОригинал создан раньше и находится на странице "${original.parent?.name || 'Unknown'}".`,
         path: pathOf(dup),
         component: name,
@@ -144,6 +146,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
     if ('fills' in asAny && asAny.fills === figma.mixed) {
       push({
         severity: 'warn',
+        rule: 'mixed-style',
         message: 'Смешанные заливки (fills = mixed)',
         path: pathOf(n),
         nodeId: n.id,
@@ -152,6 +155,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
     if ('strokes' in asAny && asAny.strokes === figma.mixed) {
       push({
         severity: 'warn',
+        rule: 'mixed-style',
         message: 'Смешанные обводки (strokes = mixed)',
         path: pathOf(n),
         nodeId: n.id,
@@ -160,6 +164,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
     if ('effects' in asAny && asAny.effects === figma.mixed) {
       push({
         severity: 'warn',
+        rule: 'mixed-style',
         message: 'Смешанные эффекты (effects = mixed)',
         path: pathOf(n),
         nodeId: n.id,
@@ -169,6 +174,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
       if (n.fontName === figma.mixed) {
         push({
           severity: 'warn',
+          rule: 'mixed-style',
           message: 'Смешанные шрифты (fontName = mixed)',
           path: pathOf(n),
           nodeId: n.id,
@@ -177,6 +183,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
       if (n.textStyleId === figma.mixed) {
         push({
           severity: 'warn',
+          rule: 'mixed-style',
           message: 'Смешанный текстовый стиль (textStyleId = mixed)',
           path: pathOf(n),
           nodeId: n.id,
@@ -189,6 +196,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
             Math.round(n.height) !== Math.round(n.mainComponent.height)) {
           push({
             severity: 'info',
+            rule: 'instance-size',
             message: `Экземпляр отличается по размеру от master-компонента "${n.mainComponent.name}"`,
             path: pathOf(n),
             component: n.mainComponent.name,
@@ -198,6 +206,7 @@ async function scanDocument(): Promise<{ results: Finding[]; totals: Totals }> {
       } else {
         push({
           severity: 'info',
+          rule: 'instance-detached',
           message: 'Instance не привязан к библиотеке (detached?)',
           path: pathOf(n),
           nodeId: n.id,
