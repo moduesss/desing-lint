@@ -5,6 +5,7 @@ import Results from './components/Results';
 import Spinner from './components/Spinner';
 import { groupByPageAndComponent } from './lib/grouping';
 import type { Finding } from './lib/types';
+import { translations, type Lang } from './lib/translations';
 import './styles.scss';
 
 // Локальные типы — чтобы не зависеть от кеша TS
@@ -17,7 +18,7 @@ type PluginToUi =
 
 const initialTotals: Totals = { total: 0, errors: 0, warns: 0, infos: 0 };
 
-function copyText(text: string) {
+function copyText(text: string, fallbackMessage: string) {
   try {
     // Без navigator.clipboard — через скрытый textarea
     const el = document.createElement('textarea');
@@ -30,8 +31,7 @@ function copyText(text: string) {
     document.execCommand('copy');
     document.body.removeChild(el);
   } catch {
-    // последняя линия обороны
-    alert('Не удалось скопировать в буфер. Выделите текст вручную.');
+    alert(fallbackMessage);
   }
 }
 
@@ -41,13 +41,10 @@ export default function App() {
   const [totals, setTotals] = useState<Totals>(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
   const [collapsedPages, setCollapsedPages] = useState<Record<string, boolean>>({});
-  const [logs, setLogs] = useState<string[]>([]);
-  const [showLog, setShowLog] = useState(false);
-  const rules = [
-    'Ищем дубликаты локальных компонентов на одной странице.',
-    'Проверяем смешанные стили (fills, strokes, effects, fontName, textStyleId).',
-    'Выявляем экземпляры, отличающиеся по размеру от master или отвязанные от библиотеки.',
-  ];
+  const [lang, setLang] = useState<Lang>(() =>
+    typeof navigator !== 'undefined' && navigator.language?.startsWith('ru') ? 'ru' : 'en'
+  );
+  const t = translations[lang];
 
   useEffect(() => {
     (window as any).onmessage = (e: MessageEvent) => {
@@ -63,7 +60,7 @@ export default function App() {
           setCollapsedPages({});
           break;
         case 'APPEND_LOG':
-          setLogs((ls) => [...ls, msg.text]);
+          // игнорируем в UI; логи разработчика скрыты
           break;
       }
     };
@@ -81,14 +78,14 @@ export default function App() {
     const lines = results.map(
       (r) => `• ${r.severity.toUpperCase()} — ${r.message}${r.path ? ` (${r.path})` : ''}`
     );
-    copyText(lines.join('\n'));
+    copyText(lines.join('\n'), t.copyFail);
   };
 
   const copyJira = () => {
     const md = results
       .map((r) => `- [${r.severity}] ${r.message}${r.path ? ` \`(${r.path})\`` : ''}`)
       .join('\n');
-    copyText(md);
+    copyText(md, t.copyFail);
   };
 
   const onHighlight = (nodeId: string) =>
@@ -136,15 +133,23 @@ export default function App() {
         onCopySlack={copySlack}
         onCopyJira={copyJira}
         disabled={status === 'scanning'}
+        lang={lang}
+        onLangChange={setLang}
+        labels={{
+          runScan: status === 'scanning' ? t.scanning : t.runScan,
+          exportJson: t.exportJson,
+          copySlack: t.copySlack,
+          copyJira: t.copyJira,
+        }}
       />
 
       <div className="canvas">
         <div className="panel intro">
           <div>
-            <div className="eyebrow">Что проверяем</div>
-            <h2>Сканируем структуру и консистентность компонентов</h2>
+            <div className="eyebrow">{t.what}</div>
+            <h2>{t.hero}</h2>
             <ul className="rules">
-              {rules.map((text, i) => <li key={i}>{text}</li>)}
+              {t.rules.map((text: string, i: number) => <li key={i}>{text}</li>)}
             </ul>
           </div>
           <StatusBar
@@ -155,6 +160,16 @@ export default function App() {
             onClickWarn={() => toggleCounter('warn')}
             onClickInfo={() => toggleCounter('info')}
             onClickTotal={toggleAll}
+            labels={{
+              total: t.totals,
+              errors: t.errors,
+              warns: t.warns,
+              info: t.info,
+              statusIdle: t.statusIdle,
+              statusScanning: t.statusScanning,
+              statusCompleted: t.statusCompleted,
+              statusError: t.statusError,
+            }}
           />
         </div>
 
@@ -162,8 +177,8 @@ export default function App() {
           <div className="panel notice" role="status" aria-live="polite">
             <Spinner />
             <div className="notice__text">
-              <div className="eyebrow">Сканирование</div>
-              <div>Проходим по документу и компонентам… Это может занять несколько секунд.</div>
+              <div className="eyebrow">{t.scanningTitle}</div>
+              <div>{t.scanningDesc}</div>
             </div>
           </div>
         )}
@@ -174,23 +189,16 @@ export default function App() {
           onTogglePage={togglePage}
           onHighlight={onHighlight}
           isEmpty={!filtered.length}
+          labels={{
+            empty: t.empty,
+            found: t.found,
+            show: t.show,
+            severityHint: t.severity,
+            errors: t.errors,
+            warns: t.warns,
+            info: t.info,
+          }}
         />
-
-        {/* Логи разработчика
-        <div className="devlog">
-          <button className="devlog__toggle" onClick={() => setShowLog(s => !s)}>
-            {showLog ? 'Скрыть лог' : 'Показать лог'}
-          </button>
-          {showLog && (
-            <div className="devlog__panel">
-              <div className="devlog__actions">
-                <button onClick={() => copyText(logs.join('\n'))}>Copy log</button>
-                <button onClick={() => setLogs([])}>Clear</button>
-              </div>
-              <pre className="devlog__pre">{logs.join('\n')}</pre>
-            </div>
-          )}
-        </div> */}
       </div>
     </div>
   );

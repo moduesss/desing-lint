@@ -9,15 +9,28 @@ type Props = {
   onTogglePage: (page: string) => void;
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
+  labels: {
+    empty: string;
+    found: string;
+    show: string;
+    severityHint: Record<string, string>;
+    errors: string;
+    warns: string;
+    info: string;
+  };
 };
 
-const severityHint: Record<string, string> = {
-  error: 'Критично, нужно исправить',
-  warn: 'Требует внимания',
-  info: 'Для информации',
-};
-
-function ComponentHeader({ name, findings, items }: { name: string; findings: number; items: Finding[] }) {
+function ComponentHeader({
+  name,
+  findings,
+  items,
+  labels,
+}: {
+  name: string;
+  findings: number;
+  items: Finding[];
+  labels: { found: string; errors: string; warns: string; info: string };
+}) {
   const stats = items.reduce(
     (acc, f) => {
       acc[f.severity as 'error' | 'warn' | 'info']++;
@@ -30,22 +43,22 @@ function ComponentHeader({ name, findings, items }: { name: string; findings: nu
     <div className="component__header">
       <div>
         <div className="component__title">{name}</div>
-        <div className="component__count">Найдено: {findings}</div>
+        <div className="component__count">{labels.found}: {findings}</div>
       </div>
       <div className="component__stats">
-        {stats.error ? <span className="chip chip--rose">{stats.error} errors</span> : null}
-        {stats.warn ? <span className="chip chip--amber">{stats.warn} warnings</span> : null}
-        {stats.info ? <span className="chip chip--muted">{stats.info} info</span> : null}
+        {stats.error ? <span className="chip chip--rose">{stats.error} {labels.errors}</span> : null}
+        {stats.warn ? <span className="chip chip--amber">{stats.warn} {labels.warns}</span> : null}
+        {stats.info ? <span className="chip chip--muted">{stats.info} {labels.info}</span> : null}
       </div>
     </div>
   );
 }
 
-export default function Results({ grouped, collapsedPages, onTogglePage, onHighlight, isEmpty }: Props) {
+export default function Results({ grouped, collapsedPages, onTogglePage, onHighlight, isEmpty, labels }: Props) {
   if (isEmpty) {
     return (
       <div className="empty">
-        Ничего не найдено. Нажми <strong>Run Scan</strong>.
+        {labels.empty}
       </div>
     );
   }
@@ -78,7 +91,12 @@ export default function Results({ grouped, collapsedPages, onTogglePage, onHighl
                 <div className="component-list">
                   {components.map((group) => (
                     <div key={group.name} className="component">
-                      <ComponentHeader name={group.name} findings={group.findings.length} items={group.findings} />
+                      <ComponentHeader
+                        name={group.name}
+                        findings={group.findings.length}
+                        items={group.findings}
+                        labels={{ found: labels.found, errors: labels.errors, warns: labels.warns, info: labels.info }}
+                      />
                       <ul className="component__findings">
                         {group.findings.map((f) => {
                           const sevClass =
@@ -90,7 +108,7 @@ export default function Results({ grouped, collapsedPages, onTogglePage, onHighl
                             <li key={f.id} className="result__line">
                               <div className="result__body">
                                 <div className="result__title">{f.message}</div>
-                                <div className="result__hint">{severityHint[f.severity]}</div>
+                                <div className="result__hint">{labels.severityHint[f.severity]}</div>
                                 <div className="result__meta">
                                   {f.path ? <span className="badge badge--muted">{f.path}</span> : null}
                                   <span className={sevClass}>{f.severity}</span>
@@ -98,7 +116,7 @@ export default function Results({ grouped, collapsedPages, onTogglePage, onHighl
                               </div>
                               {f.nodeId && (
                                 <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId)}>
-                                  Показать
+                                  {labels.show}
                                 </button>
                               )}
                             </li>

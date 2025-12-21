@@ -11,6 +11,16 @@ type Props = {
   onClickError: () => void;
   onClickWarn: () => void;
   onClickInfo: () => void;
+  labels: {
+    total: string;
+    errors: string;
+    warns: string;
+    info: string;
+    statusIdle: string;
+    statusScanning: string;
+    statusCompleted: string;
+    statusError: string;
+  };
 };
 
 export default function StatusBar({
@@ -21,29 +31,30 @@ export default function StatusBar({
   onClickError,
   onClickWarn,
   onClickInfo,
+  labels,
 }: Props) {
   return (
     <div className="statusbar">
       <div className="statusbar__left">
-        <strong>Всего:</strong>
+        <strong>{labels.total}</strong>
         <button className="pill" onClick={onClickTotal} aria-pressed={filter.error && filter.warn && filter.info}>
           {totals.total}
         </button>
         <button className={`pill pill--err ${filter.error ? '' : 'pill--off'}`} onClick={onClickError}>
-          {totals.errors} errors
+          {totals.errors} {labels.errors}
         </button>
         <button className={`pill pill--warn ${filter.warn ? '' : 'pill--off'}`} onClick={onClickWarn}>
-          {totals.warns} warns
+          {totals.warns} {labels.warns}
         </button>
         <button className={`pill pill--info ${filter.info ? '' : 'pill--off'}`} onClick={onClickInfo}>
-          {totals.infos} info
+          {totals.infos} {labels.info}
         </button>
       </div>
       <div className="statusbar__right">
-        {status === 'idle' && <span>Ничего не найдено. Нажми Run Scan.</span>}
-        {status === 'scanning' && <span>Scanning…</span>}
-        {status === 'completed' && <span>Completed</span>}
-        {status === 'error' && <span style={{ color: '#c00' }}>Error</span>}
+        {status === 'idle' && <span>{labels.statusIdle}</span>}
+        {status === 'scanning' && <span>{labels.statusScanning}</span>}
+        {status === 'completed' && <span>{labels.statusCompleted}</span>}
+        {status === 'error' && <span style={{ color: '#c00' }}>{labels.statusError}</span>}
       </div>
     </div>
   );
