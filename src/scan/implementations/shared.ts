@@ -1,21 +1,102 @@
-import type { Finding, LintConfig } from '../utils/types';
-import { getNodePath } from '../utils/node-path';
+import type { Finding, LintConfig } from '../../utils/types';
 
-type FindingDraft = Omit<Finding, 'id' | 'ruleId' | 'level' | 'severity'>;
+export type FindingDraft = Omit<Finding, 'id' | 'ruleId' | 'level' | 'severity'>;
 
-type RuleContext = {
+export type RuleContext = {
   root: DocumentNode;
   config: LintConfig;
 };
 
-type RuleEvaluator = (ctx: RuleContext) => Promise<FindingDraft[]> | FindingDraft[];
+export type RuleEvaluator = (ctx: RuleContext) => Promise<FindingDraft[]> | FindingDraft[];
 
-function getComponentKey(node: ComponentNode): string | null {
+type UnsafeInfo = {
+  node: BaseNode;
+  reasons: string[];
+};
+
+const unsafeNodes = new Map<string, UnsafeInfo>();
+const variableResolutionCache = new Map<string, Promise<boolean>>();
+
+export function resetUnsafeNodes(): void {
+  unsafeNodes.clear();
+  variableResolutionCache.clear();
+}
+
+export function markNodeUnsafe(node: BaseNode, reason: string): void {
+  const info = unsafeNodes.get(node.id);
+  if (info) {
+    if (!info.reasons.includes(reason)) info.reasons.push(reason);
+    return;
+  }
+  const reasons = [reason];
+  unsafeNodes.set(node.id, { node, reasons });
+  // Minimal debug log with nodeId and reason; avoids UI spam.
+  // eslint-disable-next-line no-console
+  console.warn('[Design Lint] broken-variable-binding', node.id, reason);
+}
+
+export function isNodeUnsafe(node: BaseNode): boolean {
+  return unsafeNodes.has(node.id);
+}
+
+export function getUnsafeNodes(): UnsafeInfo[] {
+  return Array.from(unsafeNodes.values());
+}
+
+async function safeAccess<T>(node: BaseNode, reason: string, action: () => Promise<T> | T): Promise<T | null> {
+  try {
+    return await action();
+  } catch (err) {
+    const message = `${reason}: ${String(err)}`;
+    markNodeUnsafe(node, message);
+    return null;
+  }
+}
+
+function isIgnorableVariableError(message: string): boolean {
+  const msg = message.toLowerCase();
+  return msg.includes('documentaccess') || msg.includes('getvariablebyid');
+}
+
+async function resolveVariable(aliasId: string | null | undefined, owner?: BaseNode): Promise<boolean> {
+  if (!aliasId) return false;
+  const cached = variableResolutionCache.get(aliasId);
+  if (cached) return cached;
+
+  const resolver = (figma as any).variables?.getVariableByIdAsync;
+  if (typeof resolver !== 'function') {
+    const fallback = Promise.resolve(true); // cannot validate; assume present
+    variableResolutionCache.set(aliasId, fallback);
+    return fallback;
+  }
+
+  const promise = (async () => {
+    try {
+      const resolved = await resolver.call((figma as any).variables, aliasId);
+      if (!resolved && owner) {
+        markNodeUnsafe(owner, `Variable alias ${aliasId} is missing`);
+      }
+      return !!resolved;
+    } catch (err) {
+      const message = String(err);
+      if (isIgnorableVariableError(message)) return true;
+      if (owner) {
+        markNodeUnsafe(owner, `Variable alias ${aliasId} failed: ${message}`);
+      }
+      return false;
+    }
+  })();
+
+  variableResolutionCache.set(aliasId, promise);
+  return promise;
+}
+
+export function getComponentKey(node: ComponentNode): string | null {
   const anyNode = node as ComponentNode & { key?: string };
   return typeof anyNode.key === 'string' ? anyNode.key : null;
 }
 
-function getPageName(node: BaseNode): string | undefined {
+export function getPageName(node: BaseNode): string | undefined {
   let current: BaseNode | null = node;
   while (current && current.type !== 'PAGE') {
     current = current.parent;
@@ -26,21 +107,21 @@ function getPageName(node: BaseNode): string | undefined {
   return undefined;
 }
 
-function areVariantsInSameSet(a: ComponentNode, b: ComponentNode): boolean {
+export function areVariantsInSameSet(a: ComponentNode, b: ComponentNode): boolean {
   const pa = a.parent;
   const pb = b.parent;
   if (!pa || !pb) return false;
   return pa === pb && pa.type === 'COMPONENT_SET';
 }
 
-async function resolveMainComponent(instance: InstanceNode): Promise<ComponentNode | null> {
+export async function resolveMainComponent(instance: InstanceNode): Promise<ComponentNode | null> {
   if (typeof instance.getMainComponentAsync === 'function') {
     return instance.getMainComponentAsync();
   }
   return instance.mainComponent;
 }
 
-function collectTextFamiliesAndSizes(node: TextNode): { families: Set<string>; sizes: Set<number> } {
+export function collectTextFamiliesAndSizes(node: TextNode): { families: Set<string>; sizes: Set<number> } {
   const families = new Set<string>();
   const sizes = new Set<number>();
   const segments = node.getStyledTextSegments(['fontName', 'fontSize']);
@@ -77,12 +158,15 @@ function normalizeVariableAlias(alias: VariableAlias | undefined): string | null
   return alias.id;
 }
 
-function normalizeBoundVariables(map?: { [key: string]: VariableAlias }): Record<string, string> | null {
+async function normalizeBoundVariables(map: { [key: string]: VariableAlias } | undefined, owner?: BaseNode): Promise<Record<string, string> | null> {
   if (!map) return null;
   const result: Record<string, string> = {};
   for (const key of Object.keys(map)) {
     const aliasId = normalizeVariableAlias(map[key]);
-    if (aliasId) result[key] = aliasId;
+    if (!aliasId) continue;
+    const exists = await resolveVariable(aliasId, owner);
+    if (!exists) continue;
+    result[key] = aliasId;
   }
   return Object.keys(result).length ? result : null;
 }
@@ -113,13 +197,14 @@ function extractStyleBindings(node: BaseNode): Record<string, string> | null {
   return Object.keys(result).length ? result : null;
 }
 
-function extractPaintBindings(paints?: ReadonlyArray<Paint> | typeof figma.mixed): string[] | null {
+async function extractPaintBindings(node: BaseNode, paints?: ReadonlyArray<Paint> | typeof figma.mixed): Promise<string[] | null> {
   if (!Array.isArray(paints)) return null;
   const items: string[] = [];
   for (const paint of paints) {
-    const bindings = normalizeBoundVariables((paint as any).boundVariables);
+    const bindings = await normalizeBoundVariables((paint as any).boundVariables, node);
     if (bindings) {
-      items.push(stableStringify({ type: paint.type, bindings }));
+      const payload = await safeAccess(node, 'paint boundVariables', () => Promise.resolve(stableStringify({ type: paint.type, bindings })));
+      if (payload) items.push(payload);
     }
   }
   if (!items.length) return null;
@@ -127,13 +212,14 @@ function extractPaintBindings(paints?: ReadonlyArray<Paint> | typeof figma.mixed
   return items;
 }
 
-function extractEffectBindings(effects?: ReadonlyArray<Effect> | typeof figma.mixed): string[] | null {
+async function extractEffectBindings(node: BaseNode, effects?: ReadonlyArray<Effect> | typeof figma.mixed): Promise<string[] | null> {
   if (!Array.isArray(effects)) return null;
   const items: string[] = [];
   for (const effect of effects) {
-    const bindings = normalizeBoundVariables((effect as any).boundVariables);
+    const bindings = await normalizeBoundVariables((effect as any).boundVariables, node);
     if (bindings) {
-      items.push(stableStringify({ type: effect.type, bindings }));
+      const payload = await safeAccess(node, 'effect boundVariables', () => Promise.resolve(stableStringify({ type: effect.type, bindings })));
+      if (payload) items.push(payload);
     }
   }
   if (!items.length) return null;
@@ -141,19 +227,19 @@ function extractEffectBindings(effects?: ReadonlyArray<Effect> | typeof figma.mi
   return items;
 }
 
-function extractVariableBindings(node: BaseNode): Record<string, unknown> | null {
+export async function extractVariableBindings(node: BaseNode): Promise<Record<string, unknown> | null> {
   const anyNode = node as any;
   const result: Record<string, unknown> = {};
-  const nodeBindings = normalizeBoundVariables(anyNode.boundVariables);
+  const nodeBindings = await safeAccess(node, 'node boundVariables', () => normalizeBoundVariables(anyNode.boundVariables, node));
   if (nodeBindings) result.node = nodeBindings;
 
-  const fillBindings = extractPaintBindings(anyNode.fills);
+  const fillBindings = await safeAccess(node, 'fills boundVariables', () => extractPaintBindings(node, anyNode.fills));
   if (fillBindings) result.fills = fillBindings;
 
-  const strokeBindings = extractPaintBindings(anyNode.strokes);
+  const strokeBindings = await safeAccess(node, 'strokes boundVariables', () => extractPaintBindings(node, anyNode.strokes));
   if (strokeBindings) result.strokes = strokeBindings;
 
-  const effectBindings = extractEffectBindings(anyNode.effects);
+  const effectBindings = await safeAccess(node, 'effects boundVariables', () => extractEffectBindings(node, anyNode.effects));
   if (effectBindings) result.effects = effectBindings;
 
   return Object.keys(result).length ? result : null;
@@ -258,7 +344,7 @@ function normalizeVariantProperties(variantProps: { [key: string]: string } | nu
   return Object.keys(result).length ? result : null;
 }
 
-function serializeComponentPropertyDefinitions(defs: ComponentPropertyDefinitions): Array<Record<string, unknown>> {
+async function serializeComponentPropertyDefinitions(component: ComponentNode, defs: ComponentPropertyDefinitions): Promise<Array<Record<string, unknown>>> {
   const items: Array<Record<string, unknown>> = [];
   const keys = Object.keys(defs).sort();
   for (const key of keys) {
@@ -277,28 +363,31 @@ function serializeComponentPropertyDefinitions(defs: ComponentPropertyDefinition
     if (Array.isArray(def.variantOptions)) {
       entry.variantOptions = def.variantOptions.slice();
     }
-    const boundVars = normalizeBoundVariables(def.boundVariables);
+    const boundVars = await normalizeBoundVariables(def.boundVariables, component);
     if (boundVars) entry.boundVariables = boundVars;
     items.push(entry);
   }
   return items;
 }
 
-function getComponentPropertyDefinitionsFor(component: ComponentNode): ComponentPropertyDefinitions {
+export async function getComponentPropertyDefinitionsFor(component: ComponentNode): Promise<ComponentPropertyDefinitions | null> {
   const parent = component.parent;
   if (parent && parent.type === 'COMPONENT_SET') {
-    return parent.componentPropertyDefinitions;
+    return safeAccess(component, 'componentSet.componentPropertyDefinitions', () => Promise.resolve(parent.componentPropertyDefinitions));
   }
-  return component.componentPropertyDefinitions;
+  return safeAccess(component, 'component.componentPropertyDefinitions', () => Promise.resolve(component.componentPropertyDefinitions));
 }
 
 async function buildNodeSignature(node: BaseNode): Promise<Record<string, unknown>> {
+  if (isNodeUnsafe(node)) {
+    return { type: node.type, unsafe: true };
+  }
   const signature: Record<string, unknown> = { type: node.type };
 
   const styles = extractStyleBindings(node);
   if (styles) signature.styles = styles;
 
-  const variables = extractVariableBindings(node);
+  const variables = await extractVariableBindings(node);
   if (variables) signature.variables = variables;
 
   const autoLayout = extractAutoLayout(node);
@@ -327,8 +416,9 @@ async function buildNodeSignature(node: BaseNode): Promise<Record<string, unknow
   return signature;
 }
 
-async function buildComponentSignature(component: ComponentNode): Promise<string> {
-  const definitions = serializeComponentPropertyDefinitions(getComponentPropertyDefinitionsFor(component));
+export async function buildComponentSignature(component: ComponentNode): Promise<string> {
+  const defs = await getComponentPropertyDefinitionsFor(component);
+  const definitions = defs ? await serializeComponentPropertyDefinitions(component, defs) : [];
   const variantProps = normalizeVariantProperties((component as any).variantProperties);
   const tree = await buildNodeSignature(component);
   const signature: Record<string, unknown> = {
@@ -338,185 +428,3 @@ async function buildComponentSignature(component: ComponentNode): Promise<string
   if (variantProps) signature.variantProperties = variantProps;
   return stableStringify(signature);
 }
-
-export const RULE_IMPLEMENTATIONS: Record<string, RuleEvaluator> = {
-  'text-mixed-font-family': ({ root }) => {
-    const findings: FindingDraft[] = [];
-    const textNodes = root.findAll(n => n.type === 'TEXT') as TextNode[];
-    for (const node of textNodes) {
-      const { families } = collectTextFamiliesAndSizes(node);
-      if (families.size > 1) {
-        findings.push({
-          message: 'Text node uses multiple font families.',
-          page: getPageName(node),
-          nodeId: node.id,
-          path: getNodePath(node),
-        });
-      }
-    }
-    return findings;
-  },
-  'text-mixed-color-or-decoration': ({ root }) => {
-    const findings: FindingDraft[] = [];
-    const textNodes = root.findAll(n => n.type === 'TEXT') as TextNode[];
-    for (const node of textNodes) {
-      const hasMixedStyle = node.textStyleId === figma.mixed;
-      if (!hasMixedStyle) continue;
-      const { families, sizes } = collectTextFamiliesAndSizes(node);
-      const fontFamilyConsistent = families.size === 1;
-      const fontSizeConsistent = sizes.size === 1;
-      if (fontFamilyConsistent && fontSizeConsistent) {
-        findings.push({
-          message: 'Text node mixes color or decoration while keeping font family and size consistent.',
-          page: getPageName(node),
-          nodeId: node.id,
-          path: getNodePath(node),
-        });
-      }
-    }
-    return findings;
-  },
-  'instance-size-override': async ({ root }) => {
-    const findings: FindingDraft[] = [];
-    const instances = root.findAll(n => n.type === 'INSTANCE') as InstanceNode[];
-    for (const node of instances) {
-      const main = await resolveMainComponent(node);
-      if (!main) continue;
-      if (node.width !== main.width || node.height !== main.height) {
-        findings.push({
-          message: `Instance size differs from its master "${main.name}".`,
-          page: getPageName(node),
-          nodeId: node.id,
-          path: getNodePath(node),
-          component: main.name,
-        });
-      }
-    }
-    return findings;
-  },
-  'instance-detached': async ({ root }) => {
-    const findings: FindingDraft[] = [];
-    const instances = root.findAll(n => n.type === 'INSTANCE') as InstanceNode[];
-    for (const node of instances) {
-      const main = await resolveMainComponent(node);
-      if (main === null) {
-        findings.push({
-          message: 'Instance is detached from its master component.',
-          page: getPageName(node),
-          nodeId: node.id,
-          path: getNodePath(node),
-        });
-      }
-    }
-    return findings;
-  },
-  'component-true-duplicate': ({ root, config }) => {
-    const findings: FindingDraft[] = [];
-    const groups = config.designSystem?.semanticComponents;
-    if (!groups) return findings;
-
-    const allComponents = root.findAll(n => n.type === 'COMPONENT') as ComponentNode[];
-    const byId = new Map<string, ComponentNode>();
-    const byKey = new Map<string, ComponentNode>();
-    for (const comp of allComponents) {
-      byId.set(comp.id, comp);
-      const key = getComponentKey(comp);
-      if (key) byKey.set(key, comp);
-    }
-
-    for (const groupId of Object.keys(groups)) {
-      const group = groups[groupId];
-      const semanticId = group.id || groupId;
-      const members: ComponentNode[] = [];
-      const seen = new Set<string>();
-      for (const id of group.componentIds || []) {
-        const comp = byId.get(id);
-        if (comp && !seen.has(comp.id)) {
-          members.push(comp);
-          seen.add(comp.id);
-        }
-      }
-      for (const key of group.componentKeys || []) {
-        const comp = byKey.get(key);
-        if (comp && !seen.has(comp.id)) {
-          members.push(comp);
-          seen.add(comp.id);
-        }
-      }
-
-      const intentionalIds = new Set(group.intentionalComponentIds || []);
-      const intentionalKeys = new Set(group.intentionalComponentKeys || []);
-      const filtered = members.filter(m => {
-        const key = getComponentKey(m);
-        if (intentionalIds.has(m.id)) return false;
-        if (key && intentionalKeys.has(key)) return false;
-        return true;
-      });
-
-      if (filtered.length < 2) continue;
-
-      for (const comp of filtered) {
-        const hasDuplicate = filtered.some(other => other !== comp && !areVariantsInSameSet(comp, other));
-        if (!hasDuplicate) continue;
-        findings.push({
-          message: `Component belongs to semantic group "${semanticId}" and has true duplicates.`,
-          page: getPageName(comp),
-          nodeId: comp.id,
-          path: getNodePath(comp),
-          component: semanticId,
-        });
-      }
-    }
-
-    return findings;
-  },
-  'component-structural-duplicate': async ({ root }) => {
-    const findings: FindingDraft[] = [];
-    const allComponents = root.findAll(n => n.type === 'COMPONENT') as ComponentNode[];
-    const groups = new Map<string, ComponentNode[]>();
-
-    for (const comp of allComponents) {
-      const signature = await buildComponentSignature(comp);
-      const parent = comp.parent;
-      const logicalName = parent && parent.type === 'COMPONENT_SET' ? parent.name : comp.name;
-      const key = `${logicalName}::${signature}`;
-      const list = groups.get(key) || [];
-      list.push(comp);
-      groups.set(key, list);
-    }
-
-    const getCreatedAt = (comp: ComponentNode): number => {
-      const value = (comp as any).createdAt;
-      return typeof value === 'number' ? value : Number.POSITIVE_INFINITY;
-    };
-
-    for (const comps of groups.values()) {
-      if (comps.length < 2) continue;
-      const sorted = comps.slice().sort((a, b) => {
-        const ca = getCreatedAt(a);
-        const cb = getCreatedAt(b);
-        if (ca !== cb) return ca - cb;
-        return a.id.localeCompare(b.id);
-      });
-      const [original, ...candidates] = sorted;
-      const duplicates = candidates.filter(comp => !areVariantsInSameSet(original, comp));
-      if (!duplicates.length) continue;
-
-      const parent = original.parent;
-      const logicalName = parent && parent.type === 'COMPONENT_SET' ? parent.name : original.name;
-      findings.push({
-        message: 'Component master is structurally identical to another master component.',
-        page: getPageName(original),
-        component: logicalName,
-        items: duplicates.map(comp => ({
-          label: comp.name,
-          nodeId: comp.id,
-          path: getNodePath(comp),
-          page: getPageName(comp),
-        })),
-      });
-    }
-
-    return findings;
-  },
-};

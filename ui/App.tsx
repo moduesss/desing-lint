@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Header from './components/Header';
 import StatusBar from './components/StatusBar';
 import Results from './components/Results';
@@ -6,7 +6,7 @@ import Spinner from './components/Spinner';
 import QuickFilters, { type RuleFilter } from './components/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
-import type { RuleDefinition } from './lib/types';
+import type { RuleDefinition, RuleMetadata } from './lib/types';
 import { copyText } from './lib/utils/copy';
 import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
@@ -20,6 +20,32 @@ export default function App() {
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
   const t: Translation = translations[lang];
+
+  const rulesById = useMemo(() => {
+    const entries: Array<[string, RuleDefinition]> = rules.map((r) => [r.id, r]);
+    return new Map(entries);
+  }, [rules]);
+
+  const fallbackMeta = useCallback((ruleId?: string): RuleMetadata => {
+    const category =
+      ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 'duplicate'
+      : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 'mixed'
+      : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 'instance'
+      : 'other';
+    const priority =
+      category === 'duplicate' ? 0
+      : category === 'mixed' ? 1
+      : category === 'instance' ? 2
+      : 3;
+    return { category, priority, labels: [category] };
+  }, []);
+
+  const getRuleMeta = useCallback((ruleId?: string): RuleMetadata => {
+    if (!ruleId) return fallbackMeta(ruleId);
+    const def = rulesById.get(ruleId);
+    if (def?.metadata) return def.metadata;
+    return fallbackMeta(ruleId);
+  }, [rulesById, fallbackMeta]);
 
   const onRun = () => {
     if (status === 'scanning') return;
@@ -64,43 +90,28 @@ export default function App() {
         (r.severity === 'warn' && filter.warn) ||
         (r.severity === 'info' && filter.info);
 
-      const ruleId = r.ruleId;
-      const ruleKey =
-        ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 'duplicate'
-        : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 'mixed'
-        : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 'instance'
-        : 'other';
+      const { category } = getRuleMeta(r.ruleId);
       const byRule =
-        ruleKey === 'other' ? true
-        : ruleKey === 'duplicate' ? ruleFilter.duplicate
-        : ruleKey === 'mixed' ? ruleFilter.mixed
-        : ruleFilter.instance;
+        category === 'duplicate' ? ruleFilter.duplicate
+        : category === 'mixed' ? ruleFilter.mixed
+        : category === 'instance' ? ruleFilter.instance
+        : true;
 
       return bySeverity && byRule;
     });
-  }, [results, filter, ruleFilter]);
+  }, [results, filter, ruleFilter, getRuleMeta]);
 
   const ordered = useMemo(() => {
-    const priority = (ruleId: string | undefined) =>
-      ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 0
-      : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 1
-      : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 2
-      : 3;
     return filtered
       .map((item, idx) => ({ item, idx }))
       .sort((a, b) => {
-        const pa = priority(a.item.ruleId);
-        const pb = priority(b.item.ruleId);
+        const pa = getRuleMeta(a.item.ruleId).priority;
+        const pb = getRuleMeta(b.item.ruleId).priority;
         if (pa !== pb) return pa - pb;
         return a.idx - b.idx; // стабильность внутри rule
       })
       .map(({ item }) => item);
-  }, [filtered]);
-
-  const rulesById = useMemo(() => {
-    const entries: Array<[string, RuleDefinition]> = rules.map((r) => [r.id, r]);
-    return new Map(entries);
-  }, [rules]);
+  }, [filtered, getRuleMeta]);
 
   const grouped = useMemo(() => groupByPageAndComponent(ordered), [ordered]);
 

@@ -2,6 +2,21 @@ import type { RuleDefinition } from '../utils/types';
 
 export const RULE_DEFINITIONS: RuleDefinition[] = [
   {
+    id: 'broken-variable-binding',
+    level: 'structural',
+    defaultSeverity: 'error',
+    title: 'Broken Variable Binding',
+    description: 'Variable bindings or component properties cannot be read due to Figma API inconsistencies.',
+    rationale: 'A node with unreadable variable bindings or component properties is technically invalid and may silently diverge.',
+    whenTriggered:
+      'Accessing variable bindings, aliases, resolved variables, componentPropertyDefinitions, or component set property definitions throws or returns missing data.',
+    metadata: {
+      category: 'other',
+      priority: 3,
+      labels: ['variables', 'integrity'],
+    },
+  },
+  {
     id: 'component-true-duplicate',
     level: 'ds',
     defaultSeverity: 'warn',
@@ -11,6 +26,11 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     whenTriggered:
       'Components are identified as the same semantic component and are not variants of the same Component Set and are not intentionally differentiated by props, states, or variants.',
     notes: 'Name-based comparison alone is insufficient and must not be used.',
+    metadata: {
+      category: 'duplicate',
+      priority: 0,
+      labels: ['duplicate'],
+    },
   },
   {
     id: 'text-mixed-font-family',
@@ -20,6 +40,11 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     description: 'A single text node uses multiple font families.',
     rationale: 'Mixing font families in one text block breaks typographic hierarchy.',
     whenTriggered: 'fontName === figma.mixed',
+    metadata: {
+      category: 'mixed',
+      priority: 1,
+      labels: ['mixed', 'text'],
+    },
   },
   {
     id: 'text-mixed-color-or-decoration',
@@ -29,6 +54,11 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     description: 'A single text node uses multiple colors or text decorations.',
     rationale: 'This is commonly used for links, highlights, and emphasis.',
     whenTriggered: 'textStyleId === figma.mixed AND font family and font size remain consistent.',
+    metadata: {
+      category: 'mixed',
+      priority: 1,
+      labels: ['mixed', 'text'],
+    },
   },
   {
     id: 'instance-size-override',
@@ -39,6 +69,11 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     rationale: 'In responsive and auto-layout designs this is expected behavior.',
     whenTriggered: 'Instance width or height differs from master.',
     notes: 'This rule should be disabled by default.',
+    metadata: {
+      category: 'instance',
+      priority: 2,
+      labels: ['instance'],
+    },
   },
   {
     id: 'component-structural-duplicate',
@@ -53,6 +88,11 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
       'Triggered when components are masters, not in the same Component Set, share equivalent internal structure, and have equivalent public API (component properties/variants and default values).',
     notes:
       'Comparison is structural only: no name matching, no design-system configuration, and no variants of the same Component Set.',
+    metadata: {
+      category: 'duplicate',
+      priority: 0,
+      labels: ['duplicate'],
+    },
   },
   {
     id: 'instance-detached',
@@ -62,5 +102,10 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     description: 'An instance is detached from its master component.',
     rationale: 'Detached instances stop receiving updates and silently diverge.',
     whenTriggered: 'instance.mainComponent === null',
+    metadata: {
+      category: 'instance',
+      priority: 2,
+      labels: ['instance'],
+    },
   },
 ];

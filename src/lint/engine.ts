@@ -1,6 +1,7 @@
 import type { Finding, LintConfig, LintReport, RuleDefinition, Severity, SeveritySetting, Totals } from '../utils/types';
 import { RULE_DEFINITIONS } from './rules';
-import { RULE_IMPLEMENTATIONS } from './implementations';
+import { RULE_IMPLEMENTATIONS } from '../scan';
+import { resetUnsafeNodes } from '../scan/implementations/shared';
 import { DEFAULT_LINT_CONFIG } from './config';
 
 type RuleResolution = {
@@ -39,6 +40,8 @@ export async function runLint(root: DocumentNode, config?: LintConfig): Promise<
   const startedAt = Date.now();
   const normalizedConfig = normalizeConfig(config);
   const findings: Finding[] = [];
+
+  resetUnsafeNodes();
 
   for (const rule of RULE_DEFINITIONS) {
     const resolution = resolveRule(rule, normalizedConfig);

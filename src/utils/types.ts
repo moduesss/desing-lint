@@ -3,6 +3,14 @@ export type LintLevel = 'structural' | 'stylistic' | 'ds';
 export type Severity = 'error' | 'warn' | 'info';
 export type SeveritySetting = Severity | 'off';
 
+export type RuleCategory = 'duplicate' | 'mixed' | 'instance' | 'other';
+
+export type RuleMetadata = {
+  category: RuleCategory;
+  priority: number;
+  labels: string[];
+};
+
 export type RuleDefinition = {
   id: string;
   level: LintLevel;
@@ -12,6 +20,7 @@ export type RuleDefinition = {
   rationale: string;
   whenTriggered: string;
   notes?: string;
+  metadata: RuleMetadata;
 };
 
 export type RuleOverride = {
