@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { Finding } from './types';
-import type { PluginToUi, ScanStatus, Totals } from './plugin-types';
+import type { Finding, RuleDefinition, Totals } from '../types';
+import type { PluginToUi, ScanStatus } from '../plugin/types';
 
 export function usePluginMessages(initialTotals: Totals) {
   const [status, setStatus] = useState<ScanStatus>('idle');
   const [results, setResults] = useState<Finding[]>([]);
   const [totals, setTotals] = useState<Totals>(initialTotals);
+  const [rules, setRules] = useState<RuleDefinition[]>([]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -16,8 +17,12 @@ export function usePluginMessages(initialTotals: Totals) {
           setStatus(msg.status);
           break;
         case 'RESULTS':
-          setResults(msg.results);
-          setTotals(msg.totals);
+          setResults(msg.report.findings);
+          setTotals(msg.report.totals);
+          setRules(msg.rules);
+          break;
+        case 'RULES':
+          setRules(msg.rules);
           break;
         case 'APPEND_LOG':
           // игнорируем — логи скрыты в UI
@@ -30,5 +35,5 @@ export function usePluginMessages(initialTotals: Totals) {
     };
   }, []);
 
-  return { status, setStatus, results, setResults, totals, setTotals };
+  return { status, setStatus, results, setResults, totals, setTotals, rules };
 }

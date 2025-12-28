@@ -14,3 +14,6 @@ Thumbs.db
 # editors
 .idea
 .vscode/
+
+# agents
+AGENTS

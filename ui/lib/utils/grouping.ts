@@ -6,9 +6,19 @@ export type PageGroup = { page: string; components: ComponentGroup[] };
 export function groupByPageAndComponent(list: Finding[]): PageGroup[] {
   const pages = new Map<string, Map<string, Finding[]>>();
 
+  const componentLabel = (finding: Finding): string => {
+    if (finding.component) return finding.component;
+    if (finding.path) {
+      const parts = finding.path.split(' / ').filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last) return last;
+    }
+    return 'Без компонента';
+  };
+
   for (const f of list) {
-    const page = (f.path?.split(' / ')[0] || 'Без страницы').trim();
-    const component = (f as { component?: string }).component || 'Без компонента';
+    const page = (f.page || 'Без страницы').trim();
+    const component = componentLabel(f);
     if (!pages.has(page)) pages.set(page, new Map());
     const comps = pages.get(page)!;
     if (!comps.has(component)) comps.set(component, []);

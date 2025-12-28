@@ -6,25 +6,20 @@ import Spinner from './components/Spinner';
 import QuickFilters, { type RuleFilter } from './components/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
-import type { Finding } from './lib/types';
+import type { RuleDefinition } from './lib/types';
 import { copyText } from './lib/utils/copy';
-import { initialTotals, type Totals } from './lib/plugin/types';
+import { initialTotals } from './lib/plugin/types';
+import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
 import './styles.scss';
 
 export default function App() {
-  const { status, setStatus, results, setResults, totals, setTotals } = usePluginMessages(initialTotals);
+  const { status, setStatus, results, setResults, totals, setTotals, rules } = usePluginMessages(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
   const [ruleFilter, setRuleFilter] = useState<RuleFilter>({ duplicate: true, mixed: true, instance: true });
-  const [collapsedPages, setCollapsedPages] = useState<Record<string, boolean>>({});
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
   const t: Translation = translations[lang];
-
-  // сбрасываем свёрнутые страницы при каждом новом результате
-  React.useEffect(() => {
-    setCollapsedPages({});
-  }, [results]);
 
   const onRun = () => {
     if (status === 'scanning') return;
@@ -69,11 +64,11 @@ export default function App() {
         (r.severity === 'warn' && filter.warn) ||
         (r.severity === 'info' && filter.info);
 
-      const rule = (r as any).rule as string | undefined;
+      const ruleId = r.ruleId;
       const ruleKey =
-        rule === 'duplicate' ? 'duplicate'
-        : rule === 'mixed-style' ? 'mixed'
-        : rule === 'instance-size' || rule === 'instance-detached' ? 'instance'
+        ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 'duplicate'
+        : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 'mixed'
+        : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 'instance'
         : 'other';
       const byRule =
         ruleKey === 'other' ? true
@@ -86,21 +81,26 @@ export default function App() {
   }, [results, filter, ruleFilter]);
 
   const ordered = useMemo(() => {
-    const priority = (rule: string | undefined) =>
-      rule === 'duplicate' ? 0
-      : rule === 'mixed-style' ? 1
-      : rule?.startsWith('instance-') ? 2
+    const priority = (ruleId: string | undefined) =>
+      ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 0
+      : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 1
+      : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 2
       : 3;
     return filtered
       .map((item, idx) => ({ item, idx }))
       .sort((a, b) => {
-        const pa = priority((a.item as any).rule);
-        const pb = priority((b.item as any).rule);
+        const pa = priority(a.item.ruleId);
+        const pb = priority(b.item.ruleId);
         if (pa !== pb) return pa - pb;
         return a.idx - b.idx; // стабильность внутри rule
       })
       .map(({ item }) => item);
   }, [filtered]);
+
+  const rulesById = useMemo(() => {
+    const entries: Array<[string, RuleDefinition]> = rules.map((r) => [r.id, r]);
+    return new Map(entries);
+  }, [rules]);
 
   const grouped = useMemo(() => groupByPageAndComponent(ordered), [ordered]);
 
@@ -112,9 +112,6 @@ export default function App() {
       const allOn = f.error && f.warn && f.info;
       return allOn ? { error: false, warn: false, info: false } : { error: true, warn: true, info: true };
     });
-
-  const togglePage = (page: string) =>
-    setCollapsedPages((s) => ({ ...s, [page]: !s[page] }));
 
   const toggleRule = (key: keyof RuleFilter) =>
     setRuleFilter((f) => ({ ...f, [key]: !f[key] }));
@@ -204,10 +201,14 @@ export default function App() {
 
         <Results
           grouped={grouped}
-          collapsedPages={collapsedPages}
-          onTogglePage={togglePage}
           onHighlight={onHighlight}
           isEmpty={!filtered.length}
+          rulesById={rulesById}
+          ruleI18n={{
+            titles: t.ruleTitles,
+            messages: t.ruleMessages,
+            levels: t.lintLevels,
+          }}
           labels={{
             empty: t.empty,
             found: t.found,

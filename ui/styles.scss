@@ -150,8 +150,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 22px;
-  padding: 0 10px;
+  height: fit-content;
+  padding: 5px 10px;
   border-radius: 999px;
   background: #eef2f7;
   color: #334155;
@@ -243,11 +243,53 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 46px;
-  padding: 0 14px;
+  min-height: 46px;
+  padding: 8px 14px;
   border-bottom: 1px solid #eef2f7;
   background: #f9fafb;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.section__stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Табы страниц */
+.page-tabs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 8px 2px 12px;
+}
+.page-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: #f9fafb;
+  border: 2px solid #d1d5db;
+  color: #0f172a;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+.page-tab:hover {
+  background: #f1f5f9;
+}
+.page-tab--active {
+  background: #ffffff;
+  border-color: #111827;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+.page-tab__title {
+  font-size: 14px;
 }
 .chev {
   display: inline-block;
@@ -344,6 +386,17 @@ body {
   gap: 6px;
   color: #475569;
   font-size: 11px;
+}
+.result__items {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.result__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Пустое состояние*/

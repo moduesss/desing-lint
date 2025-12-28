@@ -1,15 +1,18 @@
 import React from 'react';
-import Collapsible from './collaps/Collapsible';
 import type { PageGroup } from '../lib/utils/grouping';
-import type { Finding } from '../lib/types';
+import type { Finding, RuleDefinition } from '../lib/types';
 import type { Translation } from '../lib/i18n/translations';
 
 type Props = {
   grouped: PageGroup[];
-  collapsedPages: Record<string, boolean>;
-  onTogglePage: (page: string) => void;
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
+  rulesById: Map<string, RuleDefinition>;
+  ruleI18n: {
+    titles: Record<string, string>;
+    messages: Record<string, string>;
+    levels: Record<string, string>;
+  };
   labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info'> & { severityHint: Translation['severity'] };
 };
 
@@ -47,7 +50,44 @@ function ComponentHeader({
   );
 }
 
-export default function Results({ grouped, collapsedPages, onTogglePage, onHighlight, isEmpty, labels }: Props) {
+function formatRuleMessage(
+  ruleId: string,
+  finding: Finding,
+  messages: Record<string, string>
+): string {
+  const template = messages[ruleId];
+  if (!template) return finding.message;
+  if (template.includes('{{component}}') && !finding.component) return finding.message;
+  return template.replace(/{{\s*component\s*}}/g, finding.component || '');
+}
+
+function truncateBadge(text: string, limit = 128): string {
+  if (text.length <= limit) return text;
+  const cut = limit > 3 ? limit - 3 : limit;
+  return `${text.slice(0, cut)}...`;
+}
+
+export default function Results({
+  grouped,
+  onHighlight,
+  isEmpty,
+  rulesById,
+  ruleI18n,
+  labels,
+}: Props) {
+  const pages = grouped.map(group => group.page);
+  const [activePage, setActivePage] = React.useState(pages[0] || '');
+
+  React.useEffect(() => {
+    if (!pages.length) {
+      setActivePage('');
+      return;
+    }
+    if (!pages.includes(activePage)) {
+      setActivePage(pages[0]);
+    }
+  }, [pages, activePage]);
+
   if (isEmpty) {
     return (
       <div className="empty">
@@ -58,71 +98,92 @@ export default function Results({ grouped, collapsedPages, onTogglePage, onHighl
 
   return (
     <div className="results">
-      <div className="stack">
+      <div className="page-tabs">
         {grouped.map(({ page, components }) => {
           const count = components.reduce((acc, c) => acc + c.findings.length, 0);
-          const isCollapsed = !!collapsedPages[page];
-
+          const isActive = page === activePage;
           return (
-            <div key={page} className="panel">
-              <button
-                className="section"
-                onClick={() => onTogglePage(page)}
-                aria-expanded={!isCollapsed}
-                type="button"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="chev" style={{ transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}>▶</span>
-                  <span style={{ fontWeight: 600 }}>{page}</span>
-                </div>
-                <div>
-                  <span className="badge">{count}</span>
-                </div>
-              </button>
-
-              <Collapsible isOpen={!isCollapsed}>
-                <div className="component-list">
-                  {components.map((group) => (
-                    <div key={group.name} className="component">
-                      <ComponentHeader
-                        name={group.name}
-                        findings={group.findings.length}
-                        items={group.findings}
-                        labels={{ found: labels.found, errors: labels.errors, warns: labels.warns, info: labels.info }}
-                      />
-                      <ul className="component__findings">
-                        {group.findings.map((f) => {
-                          const sevClass =
-                            f.severity === 'error' ? 'badge badge--rose'
-                            : f.severity === 'warn' ? 'badge badge--amber'
-                            : 'badge';
-
-                          return (
-                            <li key={f.id} className="result__line">
-                              <div className="result__body">
-                                <div className="result__title">{f.message}</div>
-                                <div className="result__hint">{labels.severityHint[f.severity]}</div>
-                                <div className="result__meta">
-                                  {f.path ? <span className="badge badge--muted">{f.path}</span> : null}
-                                  <span className={sevClass}>{f.severity}</span>
-                                </div>
-                              </div>
-                              {f.nodeId && (
-                                <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId)}>
-                                  {labels.show}
-                                </button>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </Collapsible>
-            </div>
+            <button
+              key={page}
+              className={`page-tab ${isActive ? 'page-tab--active' : ''}`}
+              onClick={() => setActivePage(page)}
+              type="button"
+            >
+              <span className="chev" style={{ transform: isActive ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+              <span className="page-tab__title">{page}</span>
+              <span className="badge">{count}</span>
+            </button>
           );
         })}
+      </div>
+
+      <div className="stack">
+        {(grouped.find(group => group.page === activePage) ? [grouped.find(group => group.page === activePage)!] : []).map(({ page, components }) => (
+          <div key={page} className="panel">
+            <div className="component-list">
+              {components.map((group) => (
+                <div key={group.name} className="component">
+                  <ComponentHeader
+                    name={group.name}
+                    findings={group.findings.length}
+                    items={group.findings}
+                    labels={{ found: labels.found, errors: labels.errors, warns: labels.warns, info: labels.info }}
+                  />
+                  <ul className="component__findings">
+                    {group.findings.map((f) => {
+                      const sevClass =
+                        f.severity === 'error' ? 'badge badge--rose'
+                        : f.severity === 'warn' ? 'badge badge--amber'
+                        : 'badge';
+                      const rule = rulesById.get(f.ruleId);
+                      const ruleTitle = ruleI18n.titles[f.ruleId] || rule?.title || f.ruleId;
+                      const ruleLevel = f.level;
+                      const ruleLevelLabel = ruleI18n.levels[ruleLevel] || ruleLevel;
+                      const hintParts = [ruleTitle, labels.severityHint[f.severity]];
+                      const message = formatRuleMessage(f.ruleId, f, ruleI18n.messages);
+                      const pathLabel = f.path ? truncateBadge(f.path) : null;
+                      const items = f.items || [];
+
+                      return (
+                        <li key={f.id} className="result__line">
+                          <div className="result__body">
+                            <div className="result__title">{message}</div>
+                            <div className="result__hint">{hintParts.join(' · ')}</div>
+                            <div className="result__meta">
+                              {pathLabel ? <span className="badge badge--muted">{pathLabel}</span> : null}
+                              {ruleLevel ? <span className="badge badge--muted">{ruleLevelLabel}</span> : null}
+                              <span className={sevClass}>{f.severity}</span>
+                            </div>
+                            {items.length ? (
+                              <div className="result__items">
+                                {items.map((item) => (
+                                  <div key={item.nodeId} className="result__item">
+                                    <span className="badge badge--muted">{truncateBadge(item.label)}</span>
+                                    <button
+                                      className="btn btn--ghost"
+                                      onClick={() => onHighlight(item.nodeId)}
+                                    >
+                                      {labels.show}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                          {f.nodeId && !items.length ? (
+                            <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId)}>
+                              {labels.show}
+                            </button>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

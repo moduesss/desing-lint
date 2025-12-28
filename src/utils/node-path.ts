@@ -5,5 +5,6 @@ export function getNodePath(node: BaseNode): string {
     names.unshift(n.name || n.type)
     n = n.parent as BaseNode | null
   }
+  if (names[0] === 'Document' || names[0] === 'DOCUMENT') names.shift()
   return names.join(' / ')
 }
