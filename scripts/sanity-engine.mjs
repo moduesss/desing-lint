@@ -1,10 +1,36 @@
-import { runLint } from '../dist/lint/engine.js';
-import { DEFAULT_LINT_CONFIG } from '../dist/lint/config.js';
+import { build } from 'esbuild';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Stub minimal figma API required by runLint.
+globalThis.figma = {
+  loadAllPagesAsync: async () => {},
+};
+
+const tmpDir = mkdtempSync(join(tmpdir(), 'design-lint-engine-'));
+const outFile = join(tmpDir, 'engine.mjs');
+
+await build({
+  entryPoints: ['src/lint/engine.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'es2020',
+  outfile: outFile,
+  logLevel: 'silent',
+});
+
+const { runLint, DEFAULT_LINT_CONFIG } = await import(pathToFileURL(outFile).href);
 
 // Minimal fake DocumentNode
+const emptyFindAll = () => [];
+const fakePage = { type: 'PAGE', children: [], findAll: emptyFindAll };
 const fakeDocument = {
   type: 'DOCUMENT',
-  children: [],
+  children: [fakePage],
+  findAll: emptyFindAll,
 };
 
 async function run() {

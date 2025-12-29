@@ -1,5 +1,35 @@
-import { RULE_DEFINITIONS } from '../dist/lint/rules.js';
-import { RULE_IMPLEMENTATIONS } from '../dist/scan/index.js';
+import { build } from 'esbuild';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const tmpDir = mkdtempSync(join(tmpdir(), 'design-lint-check-'));
+const rulesOut = join(tmpDir, 'rules.mjs');
+const scanOut = join(tmpDir, 'scan.mjs');
+
+await build({
+  entryPoints: ['src/lint/rules.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'es2020',
+  outfile: rulesOut,
+  logLevel: 'silent',
+});
+
+await build({
+  entryPoints: ['src/scan/index.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'es2020',
+  outfile: scanOut,
+  logLevel: 'silent',
+});
+
+const { RULE_DEFINITIONS } = await import(pathToFileURL(rulesOut).href);
+const { RULE_IMPLEMENTATIONS } = await import(pathToFileURL(scanOut).href);
 
 const defined = new Set(RULE_DEFINITIONS.map(r => r.id));
 const implemented = new Set(Object.keys(RULE_IMPLEMENTATIONS));
