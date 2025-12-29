@@ -11,8 +11,8 @@
     "dev:code": "node esbuild.config.mjs --watch",
     "build": "rimraf dist && vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs && node esbuild.config.mjs",
     "typecheck": "tsc --noEmit",
-    "check:rules": "node scripts/check-rules.js",
-    "sanity:engine": "node scripts/sanity-engine.js"
+    "check:rules": "node scripts/check-rules.mjs",
+    "sanity:engine": "node scripts/sanity-engine.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
