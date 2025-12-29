@@ -12,13 +12,13 @@ export function checkLibraryLinks(root: DocumentNode): Finding[] {
       if (!inst.mainComponent) {
         findings.push({
           id: `lib:detached:${inst.id}`,
-          nodeId: inst.id,
-          nodeName: inst.name,
-          nodeType: inst.type,
-          path: getNodePath(inst),
-          rule: 'detached-instance',
-          message: 'Инстанс отсоединён от компонента',
+          ruleId: 'detached-instance',
+          level: 'structural',
           severity: 'error',
+          message: 'Инстанс отсоединён от компонента',
+          nodeId: inst.id,
+          path: getNodePath(inst),
+          items: [{ label: inst.name, nodeId: inst.id, path: getNodePath(inst) }],
         })
       }
     }

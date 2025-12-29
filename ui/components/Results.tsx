@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PageGroup } from '../lib/utils/grouping';
-import type { Finding, RuleDefinition } from '../lib/types';
+import type { Finding, RuleDefinition, Severity } from '../lib/types';
 import type { Translation } from '../lib/i18n/translations';
 
 type Props = {
@@ -152,10 +152,11 @@ export default function Results({
                       const ruleTitle = ruleI18n.titles[f.ruleId] || rule?.title || f.ruleId;
                       const ruleLevel = f.level;
                       const ruleLevelLabel = ruleI18n.levels[ruleLevel] || ruleLevel;
-                      const hintParts = [ruleTitle, labels.severityHint[f.severity]];
+                      const severityKey: Severity = f.severity;
+                      const hintParts = [ruleTitle, labels.severityHint[severityKey]];
                       const message = formatRuleMessage(f.ruleId, f, ruleI18n.messages);
                       const pathLabel = f.path ? truncateBadge(f.path) : null;
-                      const items = f.items || [];
+                      const items: NonNullable<Finding['items']> = f.items ?? [];
 
                       return (
                         <li key={f.id} className="result__line">
@@ -169,7 +170,7 @@ export default function Results({
                             </div>
                             {items.length ? (
                               <div className="result__items">
-                                {items.map((item) => (
+                                {items.map((item: NonNullable<Finding['items']>[number]) => (
                                   <div key={item.nodeId} className="result__item">
                                     <span className="badge badge--muted">{truncateBadge(item.label)}</span>
                                     <button
@@ -184,7 +185,7 @@ export default function Results({
                             ) : null}
                           </div>
                           {f.nodeId && !items.length ? (
-                            <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId)}>
+                            <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId as string)}>
                               {labels.show}
                             </button>
                           ) : null}

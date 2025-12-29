@@ -49,6 +49,20 @@ function getTextFamilyAndSize(t: TextNode): { family: string | null; size: numbe
 
 export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTokens): Finding[] {
   const findings: Finding[] = []
+  const addFinding = (ruleId: string, severity: 'error' | 'warn' | 'info', node: BaseNode, message: string, extraId: string) => {
+    const path = getNodePath(node)
+    const label = 'name' in node ? node.name : ruleId;
+    findings.push({
+      id: `${ruleId}:${extraId}`,
+      ruleId,
+      level: 'stylistic',
+      severity,
+      message,
+      nodeId: node.id,
+      path,
+      items: [{ label, nodeId: node.id, path }],
+    })
+  }
 
   // ❗ Без ?. и ?? — совместимо с ES2018
   const colorsObj = tokens && tokens.colors ? tokens.colors : {}
@@ -63,28 +77,16 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
     for (const node of walk(page)) {
       // БАЗОВЫЕ ПРОВЕРКИ
       if ('fills' in node && hasLocalFillWithoutStyle(node as unknown as GeometryLike)) {
-        findings.push({
-          id: `style:fill:${node.id}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-          path: getNodePath(node), rule: 'unlinked-fill', message: 'Заливка без подключённого стиля', severity: 'warn'
-        })
+        addFinding('unlinked-fill', 'warn', node, 'Заливка без подключённого стиля', node.id)
       }
       if (node.type === 'TEXT' && hasLocalTextStyle(node as TextNode)) {
-        findings.push({
-          id: `style:text:${node.id}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-          path: getNodePath(node), rule: 'unlinked-text-style', message: 'Текст без подключённых стилей (типографика/цвет)', severity: 'warn'
-        })
+        addFinding('unlinked-text-style', 'warn', node, 'Текст без подключённых стилей (типографика/цвет)', node.id)
       }
       if ('effects' in node && hasLocalEffectWithoutStyle(node as unknown as EffectLike)) {
-        findings.push({
-          id: `style:effect:${node.id}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-          path: getNodePath(node), rule: 'unlinked-effect', message: 'Эффект (тень/блюр) без стиля', severity: 'info'
-        })
+        addFinding('unlinked-effect', 'info', node, 'Эффект (тень/блюр) без стиля', node.id)
       }
       if ('cornerRadius' in node && hasLocalCorner(node as unknown as CornersLike)) {
-        findings.push({
-          id: `style:corner:${node.id}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-          path: getNodePath(node), rule: 'local-corner-radius', message: 'Локальный радиус скругления (проверьте соответствие токенам)', severity: 'info'
-        })
+        addFinding('local-corner-radius', 'info', node, 'Локальный радиус скругления (проверьте соответствие токенам)', node.id)
       }
 
       // СРАВНЕНИЕ С ТОКЕНАМИ
@@ -93,20 +95,14 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
         for (const p of solids) {
           const hex = normalizeHex(paintToHex(p))
           if (colorSet.size && !colorSet.has(hex)) {
-            findings.push({
-              id: `tokens:color:${node.id}:${hex}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-              path: getNodePath(node), rule: 'color-not-in-tokens', message: `Цвет ${hex} отсутствует в токенах`, severity: 'warn'
-            })
+            addFinding('color-not-in-tokens', 'warn', node, `Цвет ${hex} отсутствует в токенах`, `${node.id}:${hex}`)
           }
         }
       }
       if (tokens && 'cornerRadius' in node) {
         const r = (node as unknown as CornersLike).cornerRadius
         if (typeof r === 'number' && radiusSet.size && !radiusSet.has(r)) {
-          findings.push({
-            id: `tokens:radius:${node.id}:${r}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-            path: getNodePath(node), rule: 'radius-not-in-tokens', message: `Радиус ${r}px отсутствует в токенах`, severity: 'warn'
-          })
+          addFinding('radius-not-in-tokens', 'warn', node, `Радиус ${r}px отсутствует в токенах`, `${node.id}:${r}`)
         }
       }
       if (tokens && node.type === 'TEXT') {
@@ -114,10 +110,7 @@ export function checkStyleInconsistencies(root: DocumentNode, tokens?: DesignTok
         const fontOk = textArr.length === 0 || (family !== null && textArr.some(tt => tt.fontFamily === family))
         const sizeOk = textArr.length === 0 || (size !== null && textArr.some(tt => tt.fontSize === size))
         if (!fontOk || !sizeOk) {
-          findings.push({
-            id: `tokens:text:${node.id}`, nodeId: node.id, nodeName: node.name, nodeType: node.type,
-            path: getNodePath(node), rule: 'text-not-in-tokens', message: 'Типографика не соответствует токенам (семейство/кегль)', severity: 'warn'
-          })
+          addFinding('text-not-in-tokens', 'warn', node, 'Типографика не соответствует токенам (семейство/кегль)', `${node.id}`)
         }
       }
     }
