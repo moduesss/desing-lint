@@ -12,7 +12,19 @@ type Props = {
   onClickError: () => void;
   onClickWarn: () => void;
   onClickInfo: () => void;
-  labels: Pick<Translation, 'totals' | 'errors' | 'warns' | 'info' | 'statusIdle' | 'statusScanning' | 'statusCompleted' | 'statusError'>;
+  labels: Pick<
+    Translation,
+    | 'totals'
+    | 'errors'
+    | 'warns'
+    | 'info'
+    | 'statusIdle'
+    | 'statusScanning'
+    | 'statusScanningLong'
+    | 'statusCompleted'
+    | 'statusError'
+    | 'statusErrorLong'
+  >;
 };
 
 export default function StatusBar({
@@ -44,9 +56,19 @@ export default function StatusBar({
       </div>
       <div className="statusbar__right">
         {status === 'idle' && <span>{labels.statusIdle}</span>}
-        {status === 'scanning' && <span>{labels.statusScanning}</span>}
+        {status === 'scanning' && (
+          <div className="statusbar__state">
+            <span>{labels.statusScanning}</span>
+            <small className="statusbar__hint">{labels.statusScanningLong}</small>
+          </div>
+        )}
         {status === 'completed' && <span>{labels.statusCompleted}</span>}
-        {status === 'error' && <span style={{ color: '#c00' }}>{labels.statusError}</span>}
+        {status === 'error' && (
+          <div className="statusbar__state statusbar__state--error">
+            <span>{labels.statusError}</span>
+            <small className="statusbar__hint">{labels.statusErrorLong}</small>
+          </div>
+        )}
       </div>
     </div>
   );

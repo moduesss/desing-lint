@@ -206,6 +206,7 @@ body {
   gap: 12px;
 }
 .notice__text { font-size: 13px; color: var(--c-ink); }
+.notice--error { border-color: #fecdd3; background: #fff1f2; }
 
 /* Строка статуса */
 .statusbar {
@@ -226,6 +227,16 @@ body {
   flex-wrap: wrap;
 }
 .statusbar__right { color: var(--c-muted); }
+.statusbar__state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statusbar__state--error { color: #b91c1c; }
+.statusbar__hint {
+  color: #6b7280;
+  font-size: 11px;
+}
 
 .quickfilters {
   display: flex;
@@ -236,6 +247,10 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.quickfilters--disabled {
+  opacity: .65;
+  pointer-events: none;
 }
 
 /* Секции результатов */
@@ -300,7 +315,38 @@ body {
 
 .stack { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
-.results { padding-bottom: 8px; min-height: 0; }
+.results { padding-bottom: 8px; min-height: 0; position: relative; }
+.results--loading {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.1);
+}
+.results__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 1;
+}
+.results__overlay__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+}
+.results__overlay__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--c-ink);
+  font-size: 12px;
+}
 
 .chip {
   display: inline-flex;

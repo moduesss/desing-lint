@@ -7,13 +7,14 @@ type Props = {
   grouped: PageGroup[];
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
+  isLoading?: boolean;
   rulesById: Map<string, RuleDefinition>;
   ruleI18n: {
     titles: Record<string, string>;
     messages: Record<string, string>;
     levels: Record<string, string>;
   };
-  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info'> & { severityHint: Translation['severity'] };
+  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc'> & { severityHint: Translation['severity'] };
 };
 
 function ComponentHeader({
@@ -71,6 +72,7 @@ export default function Results({
   grouped,
   onHighlight,
   isEmpty,
+  isLoading,
   rulesById,
   ruleI18n,
   labels,
@@ -97,7 +99,18 @@ export default function Results({
   }
 
   return (
-    <div className="results">
+    <div className={`results ${isLoading ? 'results--loading' : ''}`}>
+      {isLoading && (
+        <div className="results__overlay" aria-live="polite">
+          <div className="results__overlay__content">
+            <div className="spinner" />
+            <div className="results__overlay__text">
+              <div className="eyebrow">{labels.scanningTitle}</div>
+              <div>{labels.scanningDesc}</div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="page-tabs">
         {grouped.map(({ page, components }) => {
           const count = components.reduce((acc, c) => acc + c.findings.length, 0);

@@ -174,14 +174,17 @@ export default function App() {
               info: t.info,
               statusIdle: t.statusIdle,
               statusScanning: t.statusScanning,
+              statusScanningLong: t.statusScanningLong,
               statusCompleted: t.statusCompleted,
               statusError: t.statusError,
+              statusErrorLong: t.statusErrorLong,
             }}
           />
         </div>
 
         <QuickFilters
           filter={ruleFilter}
+          disabled={status === 'scanning'}
           onToggleAll={toggleRulesAll}
           onToggle={toggleRule}
           labels={{
@@ -202,6 +205,14 @@ export default function App() {
             </div>
           </div>
         )}
+        {status === 'error' && (
+          <div className="panel notice notice--error" role="status" aria-live="assertive">
+            <div className="notice__text">
+              <div className="eyebrow">{t.statusError}</div>
+              <div>{t.statusErrorLong}</div>
+            </div>
+          </div>
+        )}
 
         <div className="panel docs">
           <div className="eyebrow">{t.docsTitle}</div>
@@ -214,6 +225,7 @@ export default function App() {
           grouped={grouped}
           onHighlight={onHighlight}
           isEmpty={!filtered.length}
+          isLoading={status === 'scanning'}
           rulesById={rulesById}
           ruleI18n={{
             titles: t.ruleTitles,
@@ -228,6 +240,8 @@ export default function App() {
             errors: t.errors,
             warns: t.warns,
             info: t.info,
+            scanningTitle: t.scanningTitle,
+            scanningDesc: t.scanningDesc,
           }}
         />
       </div>
