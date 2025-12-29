@@ -1,6 +1,6 @@
 {
-  "name": "desing-lint",
-  "version": "0.1.0",
+  "name": "design-lint",
+  "version": "anatomy-v1.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,11 @@
     "prepare:code": "node esbuild.config.mjs",
     "dev": "rimraf dist && npm run prepare:ui && npm run prepare:code && npm-run-all -p dev:ui dev:inline dev:code",
     "dev:ui": "vite build --config vite.config.ts --watch --mode production",
-    "dev:inline": "node -e \"const{watch}=require('fs');watch('dist/ui.js',()=>require('child_process').spawn(process.execPath,['scripts/make-inline-ui.mjs'],{stdio:'inherit'}))\"",
     "dev:code": "node esbuild.config.mjs --watch",
-    "build": "rimraf dist && vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs && node esbuild.config.mjs"
+    "build": "rimraf dist && vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs && node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "check:rules": "node scripts/check-rules.js",
+    "sanity:engine": "node scripts/sanity-engine.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
