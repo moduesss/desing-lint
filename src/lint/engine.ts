@@ -9,6 +9,15 @@ type RuleResolution = {
   severity: SeveritySetting;
 };
 
+async function ensurePagesLoaded(): Promise<void> {
+  const loader = (figma as any).loadAllPagesAsync;
+  if (typeof loader !== 'function') {
+    throw new Error('figma.loadAllPagesAsync is required when using documentAccess: dynamic-page');
+  }
+  // Must run before any traversal; removing or moving this call will break scans in dynamic-page mode.
+  await loader.call(figma);
+}
+
 function resolveRule(rule: RuleDefinition, config: LintConfig): RuleResolution {
   const levelEnabled = config.levels?.[rule.level] ?? (rule.level !== 'ds');
   const override = config.rules?.[rule.id];
@@ -37,11 +46,13 @@ function toTotals(findings: Finding[]): Totals {
 }
 
 export async function runLint(root: DocumentNode, config?: LintConfig): Promise<LintReport> {
+  resetUnsafeNodes();
+
+  await ensurePagesLoaded();
+
   const startedAt = Date.now();
   const normalizedConfig = normalizeConfig(config);
   const findings: Finding[] = [];
-
-  resetUnsafeNodes();
 
   for (const rule of RULE_DEFINITIONS) {
     const resolution = resolveRule(rule, normalizedConfig);

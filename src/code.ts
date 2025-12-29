@@ -52,9 +52,6 @@ async function runScan() {
 }
 
 async function lintDocument(): Promise<LintReport> {
-  if (typeof (figma as any).loadAllPagesAsync === 'function') {
-    await (figma as any).loadAllPagesAsync();
-  }
   return runLint(figma.root, currentConfig);
 }
 
