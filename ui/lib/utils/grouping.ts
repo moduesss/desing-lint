@@ -1,4 +1,4 @@
-import type { Finding } from './types';
+import type { Finding } from '../types';
 
 export type ComponentGroup = { name: string; findings: Finding[] };
 export type PageGroup = { page: string; components: ComponentGroup[] };

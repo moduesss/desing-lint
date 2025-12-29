@@ -17,13 +17,13 @@ export function findComponentNameDuplicates(root: DocumentNode): Finding[] {
       comps.forEach(c =>
         findings.push({
           id: `dup:${c.id}`,
-          nodeId: c.id,
-          nodeName: c.name,
-          nodeType: c.type,
-          path: getNodePath(c),
-          rule: 'component-name-duplicate',
+          ruleId: 'component-name-duplicate',
+          level: 'structural',
+          severity: 'warn',
           message: `Дубликат локального компонента с именем "${name}"`,
-          severity: 'warn'
+          nodeId: c.id,
+          path: getNodePath(c),
+          items: [{ label: c.name, nodeId: c.id, path: getNodePath(c) }]
         })
       )
     }
