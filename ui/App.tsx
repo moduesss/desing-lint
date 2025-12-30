@@ -1,23 +1,27 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header/Header';
 import StatusBar from './components/StatusBar/StatusBar';
 import Results from './components/Results/Results';
 import QuickFilters, { type RuleFilter } from './components/QuickFilters/QuickFilters';
-import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
-import type { RuleMeta, RuleMetadata } from './lib/types';
+import type { RuleMeta } from './lib/types';
 import { copyText } from './lib/utils/copy';
 import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
 import { ruleCopyByLang } from '../src/i18n/rules';
 import BackdropLoader from './components/BackdropLoader/BackdropLoader';
+import { useRuleMetaLookup } from './hooks/useRuleMetaLookup';
+import { useSeverityFilters } from './hooks/useSeverityFilters';
+import { useRuleFilters } from './hooks/useRuleFilters';
+import { useFilteredFindings } from './hooks/useFilteredFindings';
+import { useGroupedFindings } from './hooks/useGroupedFindings';
 import './styles.scss';
 
 export default function App() {
   const { status, setStatus, results, setResults, totals, setTotals, rules } = usePluginMessages(initialTotals);
-  const [filter, setFilter] = useState({ error: true, warn: true, info: true });
-  const [ruleFilter, setRuleFilter] = useState<RuleFilter>({ duplicate: true, mixed: true, instance: true });
+  const { filter, toggleCounter, toggleAll } = useSeverityFilters();
+  const { ruleFilter, toggleRule, toggleRulesAll } = useRuleFilters();
   const [backdropVisible, setBackdropVisible] = useState(false);
   const scanStartRef = useRef<number | null>(null);
   const hideTimerRef = useRef<number | null>(null);
@@ -26,31 +30,7 @@ export default function App() {
   const t: Translation = translations[lang];
   const ruleCopy = ruleCopyByLang[lang];
 
-  const rulesById = useMemo(() => {
-    const entries: Array<[string, RuleMeta]> = rules.map((r) => [r.id, r]);
-    return new Map(entries);
-  }, [rules]);
-
-  const fallbackMeta = useCallback((ruleId?: string): RuleMetadata => {
-    const category =
-      ruleId === 'component-true-duplicate' || ruleId === 'component-structural-duplicate' ? 'duplicate'
-      : ruleId === 'text-mixed-font-family' || ruleId === 'text-mixed-color-or-decoration' ? 'mixed'
-      : ruleId === 'instance-size-override' || ruleId === 'instance-detached' ? 'instance'
-      : 'other';
-    const priority =
-      category === 'duplicate' ? 0
-      : category === 'mixed' ? 1
-      : category === 'instance' ? 2
-      : 3;
-    return { category, priority, labels: [category] };
-  }, []);
-
-  const getRuleMeta = useCallback((ruleId?: string): RuleMetadata => {
-    if (!ruleId) return fallbackMeta(ruleId);
-    const def = rulesById.get(ruleId);
-    if (def?.metadata) return def.metadata;
-    return fallbackMeta(ruleId);
-  }, [rulesById, fallbackMeta]);
+  const { rulesById, getRuleMeta } = useRuleMetaLookup(rules);
 
   const onRun = () => {
     if (status === 'scanning') return;
@@ -88,54 +68,9 @@ export default function App() {
     return t;
   }, [results, totals]);
 
-  const filtered = useMemo(() => {
-    return results.filter((r) => {
-      const bySeverity =
-        (r.severity === 'error' && filter.error) ||
-        (r.severity === 'warn' && filter.warn) ||
-        (r.severity === 'info' && filter.info);
+  const filtered = useFilteredFindings(results, filter, ruleFilter, getRuleMeta);
 
-      const { category } = getRuleMeta(r.ruleId);
-      const byRule =
-        category === 'duplicate' ? ruleFilter.duplicate
-        : category === 'mixed' ? ruleFilter.mixed
-        : category === 'instance' ? ruleFilter.instance
-        : true;
-
-      return bySeverity && byRule;
-    });
-  }, [results, filter, ruleFilter, getRuleMeta]);
-
-  const ordered = useMemo(() => {
-    return filtered
-      .map((item, idx) => ({ item, idx }))
-      .sort((a, b) => {
-        const pa = getRuleMeta(a.item.ruleId).priority;
-        const pb = getRuleMeta(b.item.ruleId).priority;
-        if (pa !== pb) return pa - pb;
-        return a.idx - b.idx; // стабильность внутри rule
-      })
-      .map(({ item }) => item);
-  }, [filtered, getRuleMeta]);
-
-  const grouped = useMemo(() => groupByPageAndComponent(ordered), [ordered]);
-
-  const toggleCounter = (key: 'error' | 'warn' | 'info') =>
-    setFilter((f) => ({ ...f, [key]: !f[key] }));
-
-  const toggleAll = () =>
-    setFilter((f) => {
-      const allOn = f.error && f.warn && f.info;
-      return allOn ? { error: false, warn: false, info: false } : { error: true, warn: true, info: true };
-    });
-
-  const toggleRule = (key: keyof RuleFilter) =>
-    setRuleFilter((f) => ({ ...f, [key]: !f[key] }));
-
-  const toggleRulesAll = () => {
-    const allOn = ruleFilter.duplicate && ruleFilter.mixed && ruleFilter.instance;
-    setRuleFilter(allOn ? { duplicate: false, mixed: false, instance: false } : { duplicate: true, mixed: true, instance: true });
-  };
+  const { grouped } = useGroupedFindings(filtered, getRuleMeta);
 
   useEffect(() => {
     if (status === 'scanning') {
