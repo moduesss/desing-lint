@@ -11,17 +11,24 @@ export type RuleMetadata = {
   labels: string[];
 };
 
-export type RuleDefinition = {
+export type RuleMeta = {
   id: string;
   level: LintLevel;
   defaultSeverity: SeveritySetting;
+  notes?: string;
+  metadata: RuleMetadata;
+};
+
+export type RuleCopy = {
   title: string;
   description: string;
   rationale: string;
   whenTriggered: string;
-  notes?: string;
-  metadata: RuleMetadata;
+  message: string;
 };
+
+// Backward compatibility alias; prefer RuleMeta.
+export type RuleDefinition = RuleMeta;
 
 export type RuleOverride = {
   enabled?: boolean;
@@ -89,8 +96,8 @@ export type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
 
 export type PluginToUi =
   | { type: 'STATUS'; status: ScanStatus }
-  | { type: 'RESULTS'; report: LintReport; rules: RuleDefinition[] }
-  | { type: 'RULES'; rules: RuleDefinition[] }
+  | { type: 'RESULTS'; report: LintReport; rules: RuleMeta[] }
+  | { type: 'RULES'; rules: RuleMeta[] }
   | { type: 'APPEND_LOG'; text: string };
 
 export type UiToPlugin =

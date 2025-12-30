@@ -1,6 +1,6 @@
 import uiHtml from '../dist/ui.html';
 import { runLint } from './lint/engine';
-import { RULE_DEFINITIONS } from './lint/rules';
+import { RULE_META } from './lint/rules';
 import { DEFAULT_LINT_CONFIG } from './lint/config';
 import { getNodePath } from './utils/node-path';
 import type { LintConfig, LintReport, PluginToUi, UiToPlugin } from './utils/types';
@@ -21,7 +21,7 @@ const log = (...args: unknown[]) => {
   console.log('[Design Lint]', ...args);
 };
 
-post({ type: 'RULES', rules: RULE_DEFINITIONS });
+post({ type: 'RULES', rules: RULE_META });
 
 figma.ui.onmessage = async (msg: UiToPlugin) => {
   if (msg.type === 'RUN_SCAN') {
@@ -42,7 +42,7 @@ async function runScan() {
     const report = await lintDocument();
     lastReport = report;
     log('Lint completed.', report.totals);
-    post({ type: 'RESULTS', report, rules: RULE_DEFINITIONS });
+    post({ type: 'RESULTS', report, rules: RULE_META });
     post({ type: 'STATUS', status: 'completed' });
   } catch (err) {
     log('Lint failed:', String(err));
@@ -103,10 +103,10 @@ async function highlightNode(nodeId: string) {
 
 async function exportJson() {
   const report = lastReport ?? await lintDocument();
-  const payload = JSON.stringify({ report, rules: RULE_DEFINITIONS }, null, 2);
+  const payload = JSON.stringify({ report, rules: RULE_META }, null, 2);
   await figma.createNodeFromSvg(`<svg/>`);
   log('JSON exported', payload.slice(0, 200) + (payload.length > 200 ? '…' : ''));
   figma.notify('JSON готов. Скопируйте его из панели логов (в UI).');
-  post({ type: 'RESULTS', report, rules: RULE_DEFINITIONS });
+  post({ type: 'RESULTS', report, rules: RULE_META });
   post({ type: 'STATUS', status: 'completed' });
 }
