@@ -28,10 +28,11 @@ await build({
   logLevel: 'silent',
 });
 
-const { RULE_DEFINITIONS } = await import(pathToFileURL(rulesOut).href);
+const { RULE_META, RULE_DEFINITIONS } = await import(pathToFileURL(rulesOut).href);
 const { RULE_IMPLEMENTATIONS } = await import(pathToFileURL(scanOut).href);
 
-const defined = new Set(RULE_DEFINITIONS.map(r => r.id));
+const definitions = RULE_META ?? RULE_DEFINITIONS ?? [];
+const defined = new Set(definitions.map(r => r.id));
 const implemented = new Set(Object.keys(RULE_IMPLEMENTATIONS));
 
 const missingImpl = [...defined].filter(id => !implemented.has(id));

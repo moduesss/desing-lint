@@ -12,6 +12,7 @@
     "build": "rimraf dist && vite build --config vite.config.ts --mode production && node scripts/make-inline-ui.mjs && node esbuild.config.mjs",
     "typecheck": "tsc --noEmit",
     "check:rules": "node scripts/check-rules.mjs",
+    "check:rulecopy": "node scripts/check-rule-copy.mjs",
     "sanity:engine": "node scripts/sanity-engine.mjs"
   },
   "dependencies": {
