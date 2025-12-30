@@ -1,5 +1,6 @@
 import React from 'react';
-import Spinner from './Spinner';
+import Spinner from '../Spinner/Spinner';
+import './BackdropLoader.scss';
 
 type Props = {
   visible: boolean;

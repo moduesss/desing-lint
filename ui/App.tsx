@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Header from './components/Header';
-import StatusBar from './components/StatusBar';
-import Results from './components/Results';
-import QuickFilters, { type RuleFilter } from './components/QuickFilters';
+import Header from './components/Header/Header';
+import StatusBar from './components/StatusBar/StatusBar';
+import Results from './components/Results/Results';
+import QuickFilters, { type RuleFilter } from './components/QuickFilters/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
 import type { RuleMeta, RuleMetadata } from './lib/types';
@@ -11,7 +11,7 @@ import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
 import { ruleCopyByLang } from '../src/i18n/rules';
-import BackdropLoader from './components/BackdropLoader';
+import BackdropLoader from './components/BackdropLoader/BackdropLoader';
 import './styles.scss';
 
 export default function App() {

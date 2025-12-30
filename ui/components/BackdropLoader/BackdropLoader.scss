@@ -1,0 +1,43 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(8px);
+  padding: 16px;
+}
+
+.backdrop__center {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+}
+
+.backdrop__message {
+  font-size: 15px;
+  color: #0f172a;
+  opacity: 1;
+  transition: opacity .3s ease;
+  text-align: center;
+}
+
+.backdrop__message--fade {
+  opacity: 0;
+}
+
+.backdrop__hint {
+  margin-top: 80px;
+  font-size: 13px;
+  color: var(--c-muted);
+  text-align: center;
+}
+
+.backdrop__center .spinner {
+  width: 108px;
+  height: 108px;
+  border-width: 12px;
+}

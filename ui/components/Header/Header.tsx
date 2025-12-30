@@ -1,5 +1,6 @@
 import React from 'react';
-import type { Lang } from '../lib/i18n/translations';
+import type { Lang } from '../../lib/i18n/translations';
+import './Header.scss';
 
 type Props = {
   onRun: () => void;

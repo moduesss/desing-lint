@@ -1,0 +1,28 @@
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px dashed #e5e7eb;
+  background: #f8fafc;
+  font-size: 12px;
+}
+.statusbar__left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.statusbar__right { color: var(--c-muted); }
+.statusbar__state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statusbar__state--error { color: #b91c1c; }
+.statusbar__hint {
+  color: #6b7280;
+  font-size: 11px;
+}

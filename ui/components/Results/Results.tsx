@@ -1,7 +1,8 @@
 import React from 'react';
-import type { PageGroup } from '../lib/utils/grouping';
-import type { Finding, RuleCopy, RuleMeta, Severity } from '../lib/types';
-import type { Translation } from '../lib/i18n/translations';
+import type { PageGroup } from '../../lib/utils/grouping';
+import type { Finding, RuleCopy, RuleMeta, Severity } from '../../lib/types';
+import type { Translation } from '../../lib/i18n/translations';
+import './Results.scss';
 
 type Props = {
   grouped: PageGroup[];
