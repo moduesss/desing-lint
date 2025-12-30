@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { Finding, RuleDefinition, Totals } from '../types';
+import type { Finding, RuleMeta, Totals } from '../types';
 import type { PluginToUi, ScanStatus } from '../plugin/types';
 
 export function usePluginMessages(initialTotals: Totals) {
   const [status, setStatus] = useState<ScanStatus>('idle');
   const [results, setResults] = useState<Finding[]>([]);
   const [totals, setTotals] = useState<Totals>(initialTotals);
-  const [rules, setRules] = useState<RuleDefinition[]>([]);
+  const [rules, setRules] = useState<RuleMeta[]>([]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {

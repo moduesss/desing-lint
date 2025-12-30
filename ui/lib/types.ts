@@ -11,17 +11,24 @@ export type RuleMetadata = {
   labels: string[];
 };
 
-export type RuleDefinition = {
+export type RuleMeta = {
   id: string;
   level: LintLevel;
   defaultSeverity: SeveritySetting;
+  notes?: string;
+  metadata: RuleMetadata;
+};
+
+export type RuleCopy = {
   title: string;
   description: string;
   rationale: string;
   whenTriggered: string;
-  notes?: string;
-  metadata: RuleMetadata;
+  message: string;
 };
+
+// Backward compatibility alias; prefer RuleMeta.
+export type RuleDefinition = RuleMeta;
 
 export type Finding = {
   id: string;

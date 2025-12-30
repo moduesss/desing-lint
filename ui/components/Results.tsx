@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PageGroup } from '../lib/utils/grouping';
-import type { Finding, RuleDefinition, Severity } from '../lib/types';
+import type { Finding, RuleCopy, RuleMeta, Severity } from '../lib/types';
 import type { Translation } from '../lib/i18n/translations';
 
 type Props = {
@@ -8,12 +8,9 @@ type Props = {
   onHighlight: (nodeId: string) => void;
   isEmpty: boolean;
   isLoading?: boolean;
-  rulesById: Map<string, RuleDefinition>;
-  ruleI18n: {
-    titles: Record<string, string>;
-    messages: Record<string, string>;
-    levels: Record<string, string>;
-  };
+  rulesById: Map<string, RuleMeta>;
+  ruleCopy: Record<string, RuleCopy>;
+  levelLabels: Record<string, string>;
   labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc'> & { severityHint: Translation['severity'] };
 };
 
@@ -52,11 +49,10 @@ function ComponentHeader({
 }
 
 function formatRuleMessage(
-  ruleId: string,
   finding: Finding,
-  messages: Record<string, string>
+  copy?: RuleCopy
 ): string {
-  const template = messages[ruleId];
+  const template = copy?.message;
   if (!template) return finding.message;
   if (template.includes('{{component}}') && !finding.component) return finding.message;
   return template.replace(/{{\s*component\s*}}/g, finding.component || '');
@@ -74,7 +70,8 @@ export default function Results({
   isEmpty,
   isLoading,
   rulesById,
-  ruleI18n,
+  ruleCopy,
+  levelLabels,
   labels,
 }: Props) {
   const pages = grouped.map(group => group.page);
@@ -149,12 +146,13 @@ export default function Results({
                         : f.severity === 'warn' ? 'badge badge--amber'
                         : 'badge';
                       const rule = rulesById.get(f.ruleId);
-                      const ruleTitle = ruleI18n.titles[f.ruleId] || rule?.title || f.ruleId;
+                      const copy = ruleCopy[f.ruleId];
+                      const ruleTitle = copy?.title || rule?.id || f.ruleId;
                       const ruleLevel = f.level;
-                      const ruleLevelLabel = ruleI18n.levels[ruleLevel] || ruleLevel;
+                      const ruleLevelLabel = levelLabels[ruleLevel] || ruleLevel;
                       const severityKey: Severity = f.severity;
                       const hintParts = [ruleTitle, labels.severityHint[severityKey]];
-                      const message = formatRuleMessage(f.ruleId, f, ruleI18n.messages);
+                      const message = formatRuleMessage(f, copy);
                       const pathLabel = f.path ? truncateBadge(f.path) : null;
                       const items: NonNullable<Finding['items']> = f.items ?? [];
 

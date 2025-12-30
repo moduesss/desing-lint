@@ -6,11 +6,12 @@ import Spinner from './components/Spinner';
 import QuickFilters, { type RuleFilter } from './components/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
-import type { RuleDefinition, RuleMetadata } from './lib/types';
+import type { RuleMeta, RuleMetadata } from './lib/types';
 import { copyText } from './lib/utils/copy';
 import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
+import { ruleCopyByLang } from '../src/i18n/rules';
 import './styles.scss';
 
 export default function App() {
@@ -20,9 +21,10 @@ export default function App() {
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
   const t: Translation = translations[lang];
+  const ruleCopy = ruleCopyByLang[lang];
 
   const rulesById = useMemo(() => {
-    const entries: Array<[string, RuleDefinition]> = rules.map((r) => [r.id, r]);
+    const entries: Array<[string, RuleMeta]> = rules.map((r) => [r.id, r]);
     return new Map(entries);
   }, [rules]);
 
@@ -227,11 +229,8 @@ export default function App() {
           isEmpty={!filtered.length}
           isLoading={status === 'scanning'}
           rulesById={rulesById}
-          ruleI18n={{
-            titles: t.ruleTitles,
-            messages: t.ruleMessages,
-            levels: t.lintLevels,
-          }}
+          ruleCopy={ruleCopy}
+          levelLabels={t.lintLevels}
           labels={{
             empty: t.empty,
             found: t.found,
