@@ -1,34 +1,18 @@
 import React from 'react';
 import type { Translation } from '../lib/i18n/translations';
-
-type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error';
 type Totals = { total: number; errors: number; warns: number; infos: number };
 
 type Props = {
-  status: ScanStatus;
   totals: Totals;
   filter: { error: boolean; warn: boolean; info: boolean };
   onClickTotal: () => void;
   onClickError: () => void;
   onClickWarn: () => void;
   onClickInfo: () => void;
-  labels: Pick<
-    Translation,
-    | 'totals'
-    | 'errors'
-    | 'warns'
-    | 'info'
-    | 'statusIdle'
-    | 'statusScanning'
-    | 'statusScanningLong'
-    | 'statusCompleted'
-    | 'statusError'
-    | 'statusErrorLong'
-  >;
+  labels: Pick<Translation, 'totals' | 'errors' | 'warns' | 'info'>;
 };
 
 export default function StatusBar({
-  status,
   totals,
   filter,
   onClickTotal,
@@ -53,22 +37,6 @@ export default function StatusBar({
         <button className={`pill pill--info ${filter.info ? '' : 'pill--off'}`} onClick={onClickInfo}>
           {totals.infos} {labels.info}
         </button>
-      </div>
-      <div className="statusbar__right">
-        {status === 'idle' && <span>{labels.statusIdle}</span>}
-        {status === 'scanning' && (
-          <div className="statusbar__state">
-            <span>{labels.statusScanning}</span>
-            <small className="statusbar__hint">{labels.statusScanningLong}</small>
-          </div>
-        )}
-        {status === 'completed' && <span>{labels.statusCompleted}</span>}
-        {status === 'error' && (
-          <div className="statusbar__state statusbar__state--error">
-            <span>{labels.statusError}</span>
-            <small className="statusbar__hint">{labels.statusErrorLong}</small>
-          </div>
-        )}
       </div>
     </div>
   );

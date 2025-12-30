@@ -10,8 +10,7 @@ type Props = {
   isLoading?: boolean;
   rulesById: Map<string, RuleMeta>;
   ruleCopy: Record<string, RuleCopy>;
-  levelLabels: Record<string, string>;
-  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc'> & { severityHint: Translation['severity'] };
+  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc' | 'explain' | 'explainHide' | 'rationaleLabel' | 'triggerLabel'> & { severityHint: Translation['severity'] };
 };
 
 function ComponentHeader({
@@ -71,11 +70,20 @@ export default function Results({
   isLoading,
   rulesById,
   ruleCopy,
-  levelLabels,
   labels,
 }: Props) {
   const pages = grouped.map(group => group.page);
   const [activePage, setActivePage] = React.useState(pages[0] || '');
+  const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   React.useEffect(() => {
     if (!pages.length) {
@@ -147,25 +155,39 @@ export default function Results({
                         : 'badge';
                       const rule = rulesById.get(f.ruleId);
                       const copy = ruleCopy[f.ruleId];
-                      const ruleTitle = copy?.title || rule?.id || f.ruleId;
-                      const ruleLevel = f.level;
-                      const ruleLevelLabel = levelLabels[ruleLevel] || ruleLevel;
-                      const severityKey: Severity = f.severity;
-                      const hintParts = [ruleTitle, labels.severityHint[severityKey]];
                       const message = formatRuleMessage(f, copy);
-                      const pathLabel = f.path ? truncateBadge(f.path) : null;
+                      const description = copy?.description || '';
                       const items: NonNullable<Finding['items']> = f.items ?? [];
+                      const isExpanded = expanded.has(f.id);
+                      const tooltip = items[0]?.path || f.path || '';
 
                       return (
                         <li key={f.id} className="result__line">
                           <div className="result__body">
                             <div className="result__title">{message}</div>
-                            <div className="result__hint">{hintParts.join(' · ')}</div>
+                            {description ? <div className="result__description">{description}</div> : null}
                             <div className="result__meta">
-                              {pathLabel ? <span className="badge badge--muted">{pathLabel}</span> : null}
-                              {ruleLevel ? <span className="badge badge--muted">{ruleLevelLabel}</span> : null}
                               <span className={sevClass}>{f.severity}</span>
                             </div>
+                            <button
+                              type="button"
+                              className="btn btn--subtle result__toggle-btn"
+                              onClick={() => toggleExpanded(f.id)}
+                            >
+                              {isExpanded ? labels.explainHide : labels.explain}
+                            </button>
+                            {isExpanded && copy ? (
+                              <div className="result__details">
+                                <div className="result__details__item">
+                                  <div className="result__details__label">{labels.rationaleLabel}</div>
+                                  <div className="result__details__text">{copy.rationale}</div>
+                                </div>
+                                <div className="result__details__item">
+                                  <div className="result__details__label">{labels.triggerLabel}</div>
+                                  <div className="result__details__text">{copy.whenTriggered}</div>
+                                </div>
+                              </div>
+                            ) : null}
                             {items.length ? (
                               <div className="result__items">
                                 {items.map((item: NonNullable<Finding['items']>[number]) => (
@@ -173,6 +195,7 @@ export default function Results({
                                     <span className="badge badge--muted">{truncateBadge(item.label)}</span>
                                     <button
                                       className="btn btn--ghost"
+                                      title={item.path || tooltip || undefined}
                                       onClick={() => onHighlight(item.nodeId)}
                                     >
                                       {labels.show}
@@ -183,7 +206,11 @@ export default function Results({
                             ) : null}
                           </div>
                           {f.nodeId && !items.length ? (
-                            <button className="btn btn--ghost" onClick={() => onHighlight(f.nodeId as string)}>
+                            <button
+                              className="btn btn--ghost"
+                              title={tooltip || undefined}
+                              onClick={() => onHighlight(f.nodeId as string)}
+                            >
                               {labels.show}
                             </button>
                           ) : null}

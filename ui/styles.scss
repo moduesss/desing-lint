@@ -402,10 +402,9 @@ body {
   gap: 8px;
   min-height: 0;
 }
-
 .result__line {
-  padding: 10px 0 4px;
-  border-bottom: 1px dashed #e5e7eb;
+  padding: 15px 0;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -426,12 +425,41 @@ body {
   color: var(--c-muted);
   margin-bottom: 6px;
 }
+.result__description {
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 8px;
+}
 .result__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   color: #475569;
   font-size: 11px;
+}
+.result__toggle-btn { margin: 4px 0 6px; }
+.result__details {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+.result__details__item {
+  display: grid;
+  gap: 2px;
+}
+.result__details__label {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.result__details__text {
+  font-size: 12px;
+  color: #111827;
+  white-space: pre-line;
 }
 .result__items {
   display: grid;
@@ -444,6 +472,53 @@ body {
   gap: 8px;
   flex-wrap: wrap;
 }
+.btn--subtle {
+  background: #eef2f7;
+  border-color: #e5e7eb;
+  color: #0f172a;
+  height: 28px;
+  padding: 0 10px;
+}
+.btn--subtle:hover { background: #e2e8f0; }
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(8px);
+  padding: 16px;
+}
+.backdrop__center {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+}
+.backdrop__message {
+  font-size: 15px;
+  color: #0f172a;
+  opacity: 1;
+  transition: opacity .3s ease;
+  text-align: center;
+}
+.backdrop__message--fade {
+  opacity: 0;
+}
+.backdrop__hint {
+  margin-top: 80px;
+  font-size: 13px;
+  color: var(--c-muted);
+  text-align: center;
+}
+.backdrop__center .spinner {
+  width: 108px;
+  height: 108px;
+  border-width: 12px;
+}
 
 /* Пустое состояние*/
 .empty {
@@ -455,9 +530,9 @@ body {
 
 /* Спиннер */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #cbd5e1;
+  width: 64px;
+  height: 64px;
+  border: 8px solid #cbd5e1;
   border-top-color: #1f6feb;
   border-radius: 999px;
   animation: spin .9s linear infinite;

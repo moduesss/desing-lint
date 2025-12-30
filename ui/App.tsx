@@ -1,8 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import StatusBar from './components/StatusBar';
 import Results from './components/Results';
-import Spinner from './components/Spinner';
 import QuickFilters, { type RuleFilter } from './components/QuickFilters';
 import { groupByPageAndComponent } from './lib/utils/grouping';
 import { translations, type Lang, type Translation } from './lib/i18n/translations';
@@ -12,12 +11,16 @@ import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
 import { ruleCopyByLang } from '../src/i18n/rules';
+import BackdropLoader from './components/BackdropLoader';
 import './styles.scss';
 
 export default function App() {
   const { status, setStatus, results, setResults, totals, setTotals, rules } = usePluginMessages(initialTotals);
   const [filter, setFilter] = useState({ error: true, warn: true, info: true });
   const [ruleFilter, setRuleFilter] = useState<RuleFilter>({ duplicate: true, mixed: true, instance: true });
+  const [backdropVisible, setBackdropVisible] = useState(false);
+  const scanStartRef = useRef<number | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
   const browserLang = typeof navigator !== 'undefined' ? navigator.language || '' : '';
   const [lang, setLang] = useState<Lang>(browserLang.startsWith('ru') ? 'ru' : 'en');
   const t: Translation = translations[lang];
@@ -134,6 +137,36 @@ export default function App() {
     setRuleFilter(allOn ? { duplicate: false, mixed: false, instance: false } : { duplicate: true, mixed: true, instance: true });
   };
 
+  useEffect(() => {
+    if (status === 'scanning') {
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+      scanStartRef.current = Date.now();
+      setBackdropVisible(true);
+      return;
+    }
+    const started = scanStartRef.current;
+    const elapsed = started ? Date.now() - started : Number.POSITIVE_INFINITY;
+    const minVisible = 1500;
+    const remaining = minVisible - elapsed;
+    if (remaining > 0 && Number.isFinite(remaining)) {
+      hideTimerRef.current = window.setTimeout(() => {
+        setBackdropVisible(false);
+        hideTimerRef.current = null;
+      }, remaining);
+    } else {
+      setBackdropVisible(false);
+    }
+  }, [status]);
+
+  useEffect(() => () => {
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+    }
+  }, []);
+
   return (
     <div className="app">
       <Header
@@ -142,6 +175,7 @@ export default function App() {
         onCopySlack={copySlack}
         onCopyJira={copyJira}
         disabled={status === 'scanning'}
+        isScanning={status === 'scanning'}
         lang={lang}
         onLangChange={setLang}
         labels={{
@@ -162,7 +196,6 @@ export default function App() {
             </ul>
           </div>
           <StatusBar
-            status={status}
             totals={autosummed}
             filter={filter}
             onClickError={() => toggleCounter('error')}
@@ -174,12 +207,6 @@ export default function App() {
               errors: t.errors,
               warns: t.warns,
               info: t.info,
-              statusIdle: t.statusIdle,
-              statusScanning: t.statusScanning,
-              statusScanningLong: t.statusScanningLong,
-              statusCompleted: t.statusCompleted,
-              statusError: t.statusError,
-              statusErrorLong: t.statusErrorLong,
             }}
           />
         </div>
@@ -198,31 +225,6 @@ export default function App() {
           }}
         />
 
-        {status === 'scanning' && (
-          <div className="panel notice" role="status" aria-live="polite">
-            <Spinner />
-            <div className="notice__text">
-              <div className="eyebrow">{t.scanningTitle}</div>
-              <div>{t.scanningDesc}</div>
-            </div>
-          </div>
-        )}
-        {status === 'error' && (
-          <div className="panel notice notice--error" role="status" aria-live="assertive">
-            <div className="notice__text">
-              <div className="eyebrow">{t.statusError}</div>
-              <div>{t.statusErrorLong}</div>
-            </div>
-          </div>
-        )}
-
-        <div className="panel docs">
-          <div className="eyebrow">{t.docsTitle}</div>
-          <ul className="rules rules--compact">
-            {t.docs.map((text: string, i: number) => <li key={i}>{text}</li>)}
-          </ul>
-        </div>
-
         <Results
           grouped={grouped}
           onHighlight={onHighlight}
@@ -230,7 +232,6 @@ export default function App() {
           isLoading={status === 'scanning'}
           rulesById={rulesById}
           ruleCopy={ruleCopy}
-          levelLabels={t.lintLevels}
           labels={{
             empty: t.empty,
             found: t.found,
@@ -241,9 +242,19 @@ export default function App() {
             info: t.info,
             scanningTitle: t.scanningTitle,
             scanningDesc: t.scanningDesc,
+            explain: t.explain,
+            explainHide: t.explainHide,
+            rationaleLabel: t.rationaleLabel,
+            triggerLabel: t.triggerLabel,
           }}
         />
       </div>
+      <BackdropLoader
+        visible={backdropVisible}
+        messages={t.scanningOverlayMessages}
+        title={t.scanningTitle}
+        desc={t.scanningDesc}
+      />
     </div>
   );
 }

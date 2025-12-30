@@ -31,6 +31,16 @@ export const translations = {
     empty: 'Nothing found. Hit Run Scan.',
     found: 'Found',
     show: 'Show',
+    explain: 'Why this matters',
+    explainHide: 'Hide explanation',
+    rationaleLabel: 'Why this matters',
+    triggerLabel: 'When it triggers',
+    scanningOverlayMessages: [
+      'Analyzing your file in detail',
+      'Checking every corner',
+      'Inspecting every component under the microscope',
+      'Reviewing each page carefully'
+    ],
     severity: { error: 'Critical, fix', warn: 'Needs attention', info: 'For your information' },
     copyFail: 'Copy failed. Please copy manually.',
     quickFilters: 'Quick filters',
@@ -85,6 +95,16 @@ export const translations = {
     empty: 'Ничего не найдено. Нажми Run Scan.',
     found: 'Найдено',
     show: 'Показать',
+    explain: 'Почему это важно',
+    explainHide: 'Скрыть объяснение',
+    rationaleLabel: 'Почему это важно',
+    triggerLabel: 'Когда срабатывает',
+    scanningOverlayMessages: [
+      'Детально анализируем файл',
+      'Проверяем каждый уголок',
+      'Рассматриваем под микроскопом все компоненты',
+      'Смотрим каждую страничку'
+    ],
     severity: { error: 'Критично, нужно исправить', warn: 'Требует внимания', info: 'Для информации' },
     copyFail: 'Не удалось скопировать. Выделите текст вручную.',
     quickFilters: 'Быстрые фильтры',

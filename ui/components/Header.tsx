@@ -7,12 +7,31 @@ type Props = {
   onCopySlack: () => void;
   onCopyJira: () => void;
   disabled?: boolean;
+  isScanning: boolean;
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   labels: { runScan: string; exportJson: string; copySlack: string; copyJira: string };
 };
 
-export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disabled, lang, onLangChange, labels }: Props) {
+export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disabled, lang, onLangChange, labels, isScanning }: Props) {
+  const [runLabel, setRunLabel] = React.useState(labels.runScan);
+
+  React.useEffect(() => {
+    if (!isScanning) {
+      setRunLabel(labels.runScan);
+      return;
+    }
+    const base = (labels.runScan || '').replace(/…/g, '').replace(/\.+$/, '').trim() || labels.runScan;
+    const frames = ['.', '..', '...'];
+    let idx = 0;
+    setRunLabel(`${base}${frames[idx]}`);
+    const id = window.setInterval(() => {
+      idx = (idx + 1) % frames.length;
+      setRunLabel(`${base}${frames[idx]}`);
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [isScanning, labels.runScan]);
+
   return (
     <div className="titlebar">
       <div className="titlebar__head">
@@ -40,7 +59,7 @@ export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disab
 
       <div className="titlebar__controls">
         <button className="btn btn--primary" onClick={onRun} disabled={disabled}>
-          {labels.runScan}
+          {runLabel}
         </button>
         <button className="btn" onClick={onExport} disabled={disabled}>{labels.exportJson}</button>
         <button className="btn" onClick={onCopySlack} disabled={disabled}>{labels.copySlack}</button>
