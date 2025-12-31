@@ -1,25 +1,25 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--c-overlay-40);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 999;
   backdrop-filter: blur(8px);
-  padding: 16px;
+  padding: var(--space-16);
 }
 
 .backdrop__center {
   display: grid;
   place-items: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .backdrop__message {
   font-size: 15px;
-  color: #0f172a;
+  color: var(--c-ink);
   opacity: 1;
   transition: opacity .3s ease;
   text-align: center;
@@ -32,12 +32,12 @@
 .backdrop__hint {
   margin-top: 80px;
   font-size: 13px;
-  color: var(--c-muted);
+  color: var(--c-muted-2);
   text-align: center;
 }
 
 .backdrop__center .spinner {
   width: 108px;
   height: 108px;
-  border-width: 12px;
+  border-width: var(--space-12);
 }

@@ -2,11 +2,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--space-8);
+  padding: var(--space-10) var(--space-12);
   border-radius: var(--radius-md);
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
+  border: var(--divider);
+  background: var(--c-surface-muted);
   font-size: 12px;
 }
 
@@ -17,7 +17,7 @@
   flex-wrap: wrap;
 }
 
-.statusbar__right { color: var(--c-muted); }
+.statusbar__right { color: var(--c-muted-2); }
 
 .statusbar__state {
   display: flex;
@@ -25,9 +25,9 @@
   gap: 2px;
 }
 
-.statusbar__state--error { color: #b91c1c; }
+.statusbar__state--error { color: var(--c-rose-fg); }
 
 .statusbar__hint {
-  color: #6b7280;
+  color: var(--c-muted-2);
   font-size: 11px;
 }
