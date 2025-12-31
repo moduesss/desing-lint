@@ -1,5 +1,5 @@
-import type { Finding, LintConfig, LintReport, RuleDefinition, Severity, SeveritySetting, Totals } from '../utils/types';
-import { RULE_DEFINITIONS } from './rules';
+import type { Finding, LintConfig, LintReport, RuleMeta, Severity, SeveritySetting, Totals } from '../utils/types';
+import { RULE_META } from './rules';
 import { RULE_IMPLEMENTATIONS } from '../scan';
 import { resetUnsafeNodes } from '../scan/implementations/shared';
 import { DEFAULT_LINT_CONFIG } from './config';
@@ -10,7 +10,7 @@ type RuleResolution = {
 };
 
 async function ensurePagesLoaded(): Promise<void> {
-  const loader = (figma as any).loadAllPagesAsync;
+const loader = (figma as any).loadAllPagesAsync;
   if (typeof loader !== 'function') {
     throw new Error('figma.loadAllPagesAsync is required when using documentAccess: dynamic-page');
   }
@@ -18,7 +18,7 @@ async function ensurePagesLoaded(): Promise<void> {
   await loader.call(figma);
 }
 
-function resolveRule(rule: RuleDefinition, config: LintConfig): RuleResolution {
+function resolveRule(rule: RuleMeta, config: LintConfig): RuleResolution {
   const levelEnabled = config.levels?.[rule.level] ?? (rule.level !== 'ds');
   const override = config.rules?.[rule.id];
   const enabled = override?.enabled ?? levelEnabled;
@@ -54,7 +54,7 @@ export async function runLint(root: DocumentNode, config?: LintConfig): Promise<
   const normalizedConfig = normalizeConfig(config);
   const findings: Finding[] = [];
 
-  for (const rule of RULE_DEFINITIONS) {
+  for (const rule of RULE_META) {
     const resolution = resolveRule(rule, normalizedConfig);
     if (!resolution.enabled || resolution.severity === 'off') continue;
 

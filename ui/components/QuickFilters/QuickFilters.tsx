@@ -1,5 +1,6 @@
 import React from 'react';
-import type { Translation } from '../lib/i18n/translations';
+import type { Translation } from '../../lib/i18n/translations';
+import './QuickFilters.scss';
 
 export type RuleFilter = { duplicate: boolean; mixed: boolean; instance: boolean };
 

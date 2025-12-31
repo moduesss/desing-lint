@@ -1,0 +1,33 @@
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--radius-md);
+  border: var(--divider);
+  background: var(--c-surface-muted);
+  font-size: 12px;
+}
+
+.statusbar__left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.statusbar__right { color: var(--c-muted-2); }
+
+.statusbar__state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusbar__state--error { color: var(--c-rose-fg); }
+
+.statusbar__hint {
+  color: var(--c-muted-2);
+  font-size: 11px;
+}

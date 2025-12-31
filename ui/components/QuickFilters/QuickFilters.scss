@@ -1,0 +1,14 @@
+.quickfilters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.quickfilters__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.quickfilters--disabled {
+  opacity: .5;
+  pointer-events: none;
+}
