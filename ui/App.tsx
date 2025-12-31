@@ -177,10 +177,10 @@ export default function App() {
             info: t.info,
             scanningTitle: t.scanningTitle,
             scanningDesc: t.scanningDesc,
-            explain: t.explain,
+            explainWhy: t.explainWhy,
             explainHide: t.explainHide,
-            rationaleLabel: t.rationaleLabel,
-            triggerLabel: t.triggerLabel,
+            explainWhyTitle: t.explainWhyTitle,
+            explainWhenTitle: t.explainWhenTitle,
           }}
         />
       </div>

@@ -67,7 +67,6 @@
   color: #475569;
   font-size: 11px;
 }
-.result__toggle-btn { margin: 4px 0 6px; }
 .result__details {
   display: grid;
   gap: 6px;
@@ -102,6 +101,11 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+.result__actions {
+  display: flex;
+  gap: 10px;
+  margin: 10px auto;
+}
 
 .chip {
   display: inline-flex;
@@ -123,8 +127,7 @@
   background: #eef2f7;
   border-color: #e5e7eb;
   color: #0f172a;
-  height: 28px;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 .btn--subtle:hover { background: #e2e8f0; }
 .section {

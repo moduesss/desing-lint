@@ -6,7 +6,7 @@ import { formatRuleMessage, truncateBadge } from './utils';
 type Props = {
   finding: Finding;
   copy?: RuleCopy;
-  labels: Pick<Translation, 'show' | 'explain' | 'explainHide' | 'rationaleLabel' | 'triggerLabel'>;
+  labels: Pick<Translation, 'show' | 'explainWhy' | 'explainHide' | 'explainWhyTitle' | 'explainWhenTitle'>;
   isExpanded: boolean;
   onToggle: () => void;
   onHighlight: (nodeId: string) => void;
@@ -31,21 +31,32 @@ export function FindingItem({ finding, copy, labels, isExpanded, onToggle, onHig
         <div className="result__meta">
           <span className={severityClass}>{finding.severity}</span>
         </div>
-        <button
-          type="button"
-          className="btn btn--subtle result__toggle-btn"
-          onClick={onToggle}
-        >
-          {isExpanded ? labels.explainHide : labels.explain}
-        </button>
+        <div className="result__actions">
+          <button
+            type="button"
+            className="btn btn--subtle result__toggle-btn"
+            onClick={onToggle}
+          >
+            {isExpanded ? labels.explainHide : labels.explainWhy}
+          </button>
+          {finding.nodeId && !items.length ? (
+            <button
+              className="btn btn--ghost"
+              title={tooltip || undefined}
+              onClick={() => onHighlight(finding.nodeId as string)}
+            >
+              {labels.show}
+            </button>
+          ) : null}
+        </div>
         {isExpanded && copy ? (
           <div className="result__details">
             <div className="result__details__item">
-              <div className="result__details__label">{labels.rationaleLabel}</div>
+              <div className="result__details__label">{labels.explainWhyTitle}</div>
               <div className="result__details__text">{copy.rationale}</div>
             </div>
             <div className="result__details__item">
-              <div className="result__details__label">{labels.triggerLabel}</div>
+              <div className="result__details__label">{labels.explainWhenTitle}</div>
               <div className="result__details__text">{copy.whenTriggered}</div>
             </div>
           </div>
@@ -57,7 +68,7 @@ export function FindingItem({ finding, copy, labels, isExpanded, onToggle, onHig
                 <span className="badge badge--muted">{truncateBadge(item.label)}</span>
                 <button
                   className="btn btn--ghost"
-                  title={item.path || tooltip || undefined}
+                  title={item.path || finding.path || tooltip || undefined}
                   onClick={() => onHighlight(item.nodeId)}
                 >
                   {labels.show}
@@ -67,15 +78,6 @@ export function FindingItem({ finding, copy, labels, isExpanded, onToggle, onHig
           </div>
         ) : null}
       </div>
-      {finding.nodeId && !items.length ? (
-        <button
-          className="btn btn--ghost"
-          title={tooltip || undefined}
-          onClick={() => onHighlight(finding.nodeId as string)}
-        >
-          {labels.show}
-        </button>
-      ) : null}
     </li>
   );
 }

@@ -7,7 +7,7 @@ import { FindingItem } from './FindingItem';
 type Props = {
   group: ComponentGroup;
   ruleCopy: Record<string, RuleCopy>;
-  labels: Pick<Translation, 'found' | 'errors' | 'warns' | 'info' | 'show' | 'explain' | 'explainHide' | 'rationaleLabel' | 'triggerLabel'>;
+  labels: Pick<Translation, 'found' | 'errors' | 'warns' | 'info' | 'show' | 'explainWhy' | 'explainHide' | 'explainWhyTitle' | 'explainWhenTitle'>;
   isExpanded: (id: string) => boolean;
   onToggle: (id: string) => void;
   onHighlight: (nodeId: string) => void;
@@ -54,10 +54,10 @@ export function ComponentSection({ group, ruleCopy, labels, isExpanded, onToggle
             copy={ruleCopy[finding.ruleId]}
             labels={{
               show: labels.show,
-              explain: labels.explain,
+              explainWhy: labels.explainWhy,
               explainHide: labels.explainHide,
-              rationaleLabel: labels.rationaleLabel,
-              triggerLabel: labels.triggerLabel,
+              explainWhyTitle: labels.explainWhyTitle,
+              explainWhenTitle: labels.explainWhenTitle,
             }}
             isExpanded={isExpanded(finding.id)}
             onToggle={() => onToggle(finding.id)}

@@ -2,6 +2,7 @@ export const translations = {
   en: {
     langLabel: 'Language',
     runScan: 'Run Scan',
+    scanningButtonBase: 'Scanning',
     scanning: 'Scanning…',
     exportJson: 'Export JSON',
     copySlack: 'Copy Slack',
@@ -35,6 +36,10 @@ export const translations = {
     explainHide: 'Hide explanation',
     rationaleLabel: 'Why this matters',
     triggerLabel: 'When it triggers',
+    explainWhy: 'Why this matters',
+    explainHideLabel: 'Hide explanation',
+    explainWhyTitle: 'WHY THIS MATTERS',
+    explainWhenTitle: 'WHEN IT TRIGGERS',
     scanningOverlayMessages: [
       'Analyzing your file in detail',
       'Checking every corner',
@@ -66,6 +71,7 @@ export const translations = {
   ru: {
     langLabel: 'Язык',
     runScan: 'Запустить скан',
+    scanningButtonBase: 'Сканирование',
     scanning: 'Сканирование…',
     exportJson: 'Экспорт JSON',
     copySlack: 'Копировать для Slack',
@@ -99,6 +105,10 @@ export const translations = {
     explainHide: 'Скрыть объяснение',
     rationaleLabel: 'Почему это важно',
     triggerLabel: 'Когда срабатывает',
+    explainWhy: 'Почему это важно',
+    explainHideLabel: 'Скрыть объяснение',
+    explainWhyTitle: 'ПОЧЕМУ ЭТО ВАЖНО',
+    explainWhenTitle: 'КОГДА СРАБАТЫВАЕТ',
     scanningOverlayMessages: [
       'Детально анализируем файл',
       'Проверяем каждый уголок',

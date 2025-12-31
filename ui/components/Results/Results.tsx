@@ -14,7 +14,7 @@ type Props = {
   isLoading?: boolean;
   rulesById: Map<string, RuleMeta>;
   ruleCopy: Record<string, RuleCopy>;
-  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc' | 'explain' | 'explainHide' | 'rationaleLabel' | 'triggerLabel'> & { severityHint: Translation['severity'] };
+  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc' | 'explainWhy' | 'explainHide' | 'explainWhyTitle' | 'explainWhenTitle'> & { severityHint: Translation['severity'] };
 };
 
 export default function Results({
