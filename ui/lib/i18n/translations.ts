@@ -5,8 +5,10 @@ export const translations = {
     scanningButtonBase: 'Scanning',
     scanning: 'Scanning…',
     exportJson: 'Export JSON',
-    copySlack: 'Copy Slack',
-    copyJira: 'Copy Jira',
+    copy: 'Copy',
+    copySlack: 'Copy for Slack',
+    copyJira: 'Copy for Jira',
+    copyError: 'Error',
     what: 'What we check',
     hero: 'Scanning structure and consistency',
     rules: [
@@ -47,7 +49,8 @@ export const translations = {
       'Reviewing each page carefully'
     ],
     severity: { error: 'Critical, fix', warn: 'Needs attention', info: 'For your information' },
-    copyFail: 'Copy failed. Please copy manually.',
+    copied: 'Copied',
+    copyFailed: 'Copy failed. Please copy manually.',
     quickFilters: 'Quick filters',
     filterAll: 'All types',
     filterDuplicates: 'Duplicates',
@@ -74,8 +77,10 @@ export const translations = {
     scanningButtonBase: 'Сканирование',
     scanning: 'Сканирование…',
     exportJson: 'Экспорт JSON',
+    copy: 'Копировать',
     copySlack: 'Копировать для Slack',
     copyJira: 'Копировать для Jira',
+    copyError: 'Ошибка',
     what: 'Что проверяем',
     hero: 'Сканируем структуру и консистентность компонентов',
     rules: [
@@ -116,7 +121,8 @@ export const translations = {
       'Смотрим каждую страничку'
     ],
     severity: { error: 'Критично, нужно исправить', warn: 'Требует внимания', info: 'Для информации' },
-    copyFail: 'Не удалось скопировать. Выделите текст вручную.',
+    copied: 'Скопировано',
+    copyFailed: 'Не удалось скопировать. Скопируйте вручную.',
     quickFilters: 'Быстрые фильтры',
     filterAll: 'Все типы',
     filterDuplicates: 'Дубликаты',

@@ -3,7 +3,7 @@ import Spinner from '../Spinner/Spinner';
 import { useFindingExpansion } from '../../hooks/useFindingExpansion';
 import type { PageGroup } from '../../lib/utils/grouping';
 import type { RuleCopy, RuleMeta } from '../../lib/types';
-import type { Translation } from '../../lib/i18n/translations';
+import type { Lang, Translation } from '../../lib/i18n/translations';
 import { ComponentSection } from './ComponentSection';
 import './Results.scss';
 
@@ -14,7 +14,28 @@ type Props = {
   isLoading?: boolean;
   rulesById: Map<string, RuleMeta>;
   ruleCopy: Record<string, RuleCopy>;
-  labels: Pick<Translation, 'empty' | 'found' | 'show' | 'errors' | 'warns' | 'info' | 'scanningTitle' | 'scanningDesc' | 'explainWhy' | 'explainHide' | 'explainWhyTitle' | 'explainWhenTitle'> & { severityHint: Translation['severity'] };
+  labels: Pick<
+    Translation,
+    'empty'
+    | 'found'
+    | 'show'
+    | 'errors'
+    | 'warns'
+    | 'info'
+    | 'scanningTitle'
+    | 'scanningDesc'
+    | 'explainWhy'
+    | 'explainHide'
+    | 'explainWhyTitle'
+    | 'explainWhenTitle'
+    | 'copy'
+    | 'copySlack'
+    | 'copyJira'
+    | 'copied'
+    | 'copyError'
+    | 'copyFailed'
+  > & { severityHint: Translation['severity'] };
+  lang: Lang;
 };
 
 export default function Results({
@@ -25,6 +46,7 @@ export default function Results({
   rulesById: _rulesById,
   ruleCopy,
   labels,
+  lang,
 }: Props) {
   const pages = grouped.map((group) => group.page);
   const [activePage, setActivePage] = React.useState(pages[0] || '');
@@ -92,6 +114,7 @@ export default function Results({
                   group={component}
                   ruleCopy={ruleCopy}
                   labels={labels}
+                  lang={lang}
                   isExpanded={isExpanded}
                   onToggle={toggle}
                   onHighlight={onHighlight}

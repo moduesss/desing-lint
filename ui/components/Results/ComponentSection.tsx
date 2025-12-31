@@ -1,13 +1,31 @@
 import React from 'react';
 import type { ComponentGroup } from '../../lib/utils/grouping';
 import type { Finding, RuleCopy } from '../../lib/types';
-import type { Translation } from '../../lib/i18n/translations';
+import type { Lang, Translation } from '../../lib/i18n/translations';
 import { FindingItem } from './FindingItem';
 
 type Props = {
   group: ComponentGroup;
   ruleCopy: Record<string, RuleCopy>;
-  labels: Pick<Translation, 'found' | 'errors' | 'warns' | 'info' | 'show' | 'explainWhy' | 'explainHide' | 'explainWhyTitle' | 'explainWhenTitle'>;
+  labels: Pick<
+    Translation,
+    'found'
+    | 'errors'
+    | 'warns'
+    | 'info'
+    | 'show'
+    | 'explainWhy'
+    | 'explainHide'
+    | 'explainWhyTitle'
+    | 'explainWhenTitle'
+    | 'copy'
+    | 'copySlack'
+    | 'copyJira'
+    | 'copied'
+    | 'copyError'
+    | 'copyFailed'
+  > & { severityHint: Translation['severity'] };
+  lang: Lang;
   isExpanded: (id: string) => boolean;
   onToggle: (id: string) => void;
   onHighlight: (nodeId: string) => void;
@@ -37,7 +55,7 @@ function ComponentHeader({ name, findings, items, labels }: { name: string; find
   );
 }
 
-export function ComponentSection({ group, ruleCopy, labels, isExpanded, onToggle, onHighlight }: Props) {
+export function ComponentSection({ group, ruleCopy, labels, lang, isExpanded, onToggle, onHighlight }: Props) {
   return (
     <div className="component">
       <ComponentHeader
@@ -58,7 +76,15 @@ export function ComponentSection({ group, ruleCopy, labels, isExpanded, onToggle
               explainHide: labels.explainHide,
               explainWhyTitle: labels.explainWhyTitle,
               explainWhenTitle: labels.explainWhenTitle,
+              copy: labels.copy,
+              copySlack: labels.copySlack,
+              copyJira: labels.copyJira,
+              copied: labels.copied,
+              copyError: labels.copyError,
+              copyFailed: labels.copyFailed,
+              severity: labels.severityHint,
             }}
+            lang={lang}
             isExpanded={isExpanded(finding.id)}
             onToggle={() => onToggle(finding.id)}
             onHighlight={onHighlight}

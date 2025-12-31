@@ -44,14 +44,14 @@ export default function App() {
     const lines = results.map(
       (r) => `• ${r.severity.toUpperCase()} — ${r.message}${r.path ? ` (${r.path})` : ''}`
     );
-    copyText(lines.join('\n'), t.copyFail);
+    copyText(lines.join('\n'), t.copyFailed);
   };
 
   const copyJira = () => {
     const md = results
       .map((r) => `- [${r.severity}] ${r.message}${r.path ? ` \`(${r.path})\`` : ''}`)
       .join('\n');
-    copyText(md, t.copyFail);
+    copyText(md, t.copyFailed);
   };
 
   const onHighlight = (nodeId: string) =>
@@ -167,6 +167,7 @@ export default function App() {
           isLoading={status === 'scanning'}
           rulesById={rulesById}
           ruleCopy={ruleCopy}
+          lang={lang}
           labels={{
             empty: t.empty,
             found: t.found,
@@ -181,6 +182,12 @@ export default function App() {
             explainHide: t.explainHide,
             explainWhyTitle: t.explainWhyTitle,
             explainWhenTitle: t.explainWhenTitle,
+            copy: t.copy,
+            copySlack: t.copySlack,
+            copyJira: t.copyJira,
+            copied: t.copied,
+            copyError: t.copyError,
+            copyFailed: t.copyFailed,
           }}
         />
       </div>

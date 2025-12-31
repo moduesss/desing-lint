@@ -62,9 +62,13 @@ export default function Header({ onRun, onExport, onCopySlack, onCopyJira, disab
         <button className="btn btn--primary" onClick={onRun} disabled={disabled}>
           {runLabel}
         </button>
-        <button className="btn" onClick={onExport} disabled={disabled}>{labels.exportJson}</button>
+        {/* TODO
+          Export
+          Jira & Slack Updates
+        */}
+        {/* <button className="btn" onClick={onExport} disabled={disabled}>{labels.exportJson}</button>
         <button className="btn" onClick={onCopySlack} disabled={disabled}>{labels.copySlack}</button>
-        <button className="btn" onClick={onCopyJira} disabled={disabled}>{labels.copyJira}</button>
+        <button className="btn" onClick={onCopyJira} disabled={disabled}>{labels.copyJira}</button> */}
       </div>
     </div>
   );
