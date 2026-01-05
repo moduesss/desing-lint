@@ -75,6 +75,16 @@ export const RULE_META: RuleMeta[] = [
       labels: ['instance'],
     },
   },
+  {
+    id: 'engine-rule-failure',
+    level: 'structural',
+    defaultSeverity: 'warn',
+    metadata: {
+      category: 'other',
+      priority: 3,
+      labels: ['engine', 'stability'],
+    },
+  },
 ] as const;
 
 export type RuleId = (typeof RULE_META)[number]['id'];

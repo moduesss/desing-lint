@@ -53,6 +53,9 @@ export async function runLint(root: DocumentNode, config?: LintConfig): Promise<
   const startedAt = Date.now();
   const normalizedConfig = normalizeConfig(config);
   const findings: Finding[] = [];
+  const failureRuleId = 'engine-rule-failure';
+  const failureMeta = RULE_META.find((meta) => meta.id === failureRuleId);
+  const failureLevel = failureMeta?.level ?? 'structural';
 
   for (const rule of RULE_META) {
     const resolution = resolveRule(rule, normalizedConfig);
@@ -61,7 +64,27 @@ export async function runLint(root: DocumentNode, config?: LintConfig): Promise<
     const evaluator = RULE_IMPLEMENTATIONS[rule.id];
     if (!evaluator) continue;
 
-    const drafts = await evaluator({ root, config: normalizedConfig });
+    let drafts: Awaited<ReturnType<typeof evaluator>>;
+    try {
+      drafts = await evaluator({ root, config: normalizedConfig });
+    } catch (err) {
+      const rawMessage =
+        err instanceof Error && err.message ? err.message : String(err);
+      const message = rawMessage.length > 200 ? rawMessage.slice(0, 200) : rawMessage;
+      // eslint-disable-next-line no-console
+      console.error('[Design Lint] rule evaluator failed', rule.id, err);
+      findings.push({
+        id: `${failureRuleId}:${findings.length + 1}`,
+        ruleId: failureRuleId,
+        level: failureLevel,
+        severity: 'warn',
+        message: `Rule "${rule.id}" failed during scan: ${message}`,
+        page: '(Engine)',
+        component: '(Scan)',
+        items: [],
+      });
+      continue;
+    }
     for (const draft of drafts) {
       findings.push({
         id: `${rule.id}:${findings.length + 1}`,

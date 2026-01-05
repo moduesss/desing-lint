@@ -61,4 +61,12 @@ export const ruleCopyEn: Record<RuleId, RuleCopy> = {
     whenTriggered: 'instance.mainComponent === null',
     message: 'Instance is detached from its master component.',
   },
+  'engine-rule-failure': {
+    title: 'Rule execution failed',
+    description: 'A lint rule crashed during scanning. Scan continued with partial results.',
+    rationale:
+      'This usually happens due to a Figma API inconsistency or an unexpected node state. Other checks still completed.',
+    whenTriggered: 'Triggered when a rule evaluator throws an error during scanning.',
+    message: 'A rule failed during scanning.',
+  },
 } as const;
