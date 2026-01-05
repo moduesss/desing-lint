@@ -33,5 +33,8 @@ jobs:
       - name: Check rule declarations
         run: npm run check:rules
 
+      - name: Check rule copy completeness
+        run: npm run check:rulecopy
+        
       - name: Engine sanity check
         run: npm run sanity:engine
