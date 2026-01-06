@@ -1,9 +1,9 @@
 import React from 'react';
 import Spinner from '../Spinner/Spinner';
 import { useFindingExpansion } from '../../hooks/useFindingExpansion';
-import type { PageGroup } from '../../lib/utils/grouping';
+import type { PageGroup } from '../../lib/findings/grouping';
 import type { RuleCopy, RuleMeta } from '../../lib/types';
-import type { Lang, Translation } from '../../lib/i18n/translations';
+import type { Lang, Translation } from '../../lib/i18n';
 import { ComponentSection } from './ComponentSection';
 import './Results.scss';
 

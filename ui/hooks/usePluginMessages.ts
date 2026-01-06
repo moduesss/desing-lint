@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Finding, RuleMeta, Totals } from '../types';
-import type { PluginToUi, ScanStatus } from '../plugin/types';
+import type { Finding, RuleMeta, Totals } from '../lib/types';
+import type { PluginToUi, ScanStatus } from '../lib/plugin/messages';
 
 export function usePluginMessages(initialTotals: Totals) {
   const [status, setStatus] = useState<ScanStatus>('idle');

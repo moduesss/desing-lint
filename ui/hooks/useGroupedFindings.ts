@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Finding, RuleMetadata } from '../lib/types';
-import { groupByPageAndComponent, type PageGroup } from '../lib/utils/grouping';
+import { groupByPageAndComponent, type PageGroup } from '../lib/findings/grouping';
 
 export function useGroupedFindings(
   filtered: Finding[],

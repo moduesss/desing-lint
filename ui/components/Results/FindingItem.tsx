@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Finding, RuleCopy } from '../../lib/types';
-import type { Lang, Translation } from '../../lib/i18n/translations';
+import type { Lang, Translation } from '../../lib/i18n';
 import { copyToClipboard } from '../../lib/utils/copy';
-import { formatJiraFinding, formatSlackFinding } from '../../lib/utils/exportFormats';
+import { formatJiraFinding, formatSlackFinding } from '../../lib/format/finding';
 import { formatRuleMessage, truncateBadge } from './utils';
 
 type Props = {

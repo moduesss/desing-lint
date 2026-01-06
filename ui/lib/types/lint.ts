@@ -18,4 +18,4 @@ export type {
   ScanStatus,
   PluginToUi,
   UiToPlugin,
-} from '../../src/utils/types';
+} from '../../../src/utils/types';

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Translation } from '../../lib/i18n/translations';
+import type { Translation } from '../../lib/i18n';
 import './StatusBar.scss';
 type Totals = { total: number; errors: number; warns: number; infos: number };
 

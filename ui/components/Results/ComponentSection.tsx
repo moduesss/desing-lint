@@ -1,7 +1,7 @@
 import React from 'react';
-import type { ComponentGroup } from '../../lib/utils/grouping';
+import type { ComponentGroup } from '../../lib/findings/grouping';
 import type { Finding, RuleCopy } from '../../lib/types';
-import type { Lang, Translation } from '../../lib/i18n/translations';
+import type { Lang, Translation } from '../../lib/i18n';
 import { FindingItem } from './FindingItem';
 
 type Props = {
