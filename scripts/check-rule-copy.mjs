@@ -17,13 +17,13 @@ const buildConfig = {
 };
 
 await build({
-  entryPoints: ['src/lint/rules/meta.ts'],
+  entryPoints: ['src/rules/meta.ts'],
   outfile: metaOut,
   ...buildConfig,
 });
 
 await build({
-  entryPoints: ['src/i18n/rules/index.ts'],
+  entryPoints: ['src/rules/copy/index.ts'],
   outfile: copyOut,
   ...buildConfig,
 });

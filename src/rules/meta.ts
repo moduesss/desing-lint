@@ -1,4 +1,4 @@
-import type { RuleMeta } from '../../utils/types';
+import type { RuleMeta } from '../utils/types';
 
 export const RULE_META: RuleMeta[] = [
   {

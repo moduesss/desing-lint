@@ -1,6 +1,6 @@
-import { getNodePath } from '../../utils/node-path';
-import type { FindingDraft, RuleEvaluator } from './shared';
-import { collectTextFamiliesAndSizes, getPageName, isNodeUnsafe } from './shared';
+import { getNodePath } from '../../figma/traversal/node-path';
+import type { FindingDraft, RuleEvaluator } from '../../figma';
+import { collectTextFamiliesAndSizes, getPageName, isNodeUnsafe } from '../../figma';
 
 export const textMixedFontFamily: RuleEvaluator = ({ root }) => {
   const findings: FindingDraft[] = [];

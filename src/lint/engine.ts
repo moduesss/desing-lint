@@ -1,7 +1,7 @@
 import type { Finding, LintConfig, LintReport, RuleMeta, Severity, SeveritySetting, Totals } from '../utils/types';
-import { RULE_META } from './rules';
-import { RULE_IMPLEMENTATIONS } from '../scan';
-import { resetUnsafeNodes } from '../scan/implementations/shared';
+import { RULE_META } from '../rules'
+import { RULE_IMPLEMENTATIONS } from '../rules';
+import { resetUnsafeNodes } from '../rules';
 import { DEFAULT_LINT_CONFIG } from './config';
 
 type RuleResolution = {

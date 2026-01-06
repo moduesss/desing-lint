@@ -1,12 +1,12 @@
-import { getNodePath } from '../../utils/node-path';
-import type { FindingDraft, RuleEvaluator } from './shared';
+import { getNodePath } from '../../figma/traversal/node-path';
+import type { FindingDraft, RuleEvaluator } from '../../figma';
 import {
   areVariantsInSameSet,
   buildComponentSignature,
   getComponentKey,
   getPageName,
   isNodeUnsafe,
-} from './shared';
+} from '../../figma';
 
 export const componentTrueDuplicate: RuleEvaluator = ({ root, config }) => {
   const findings: FindingDraft[] = [];

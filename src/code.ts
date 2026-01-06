@@ -1,8 +1,7 @@
 import uiHtml from '../dist/ui.html';
-import { runLint } from './lint/engine';
-import { RULE_META } from './lint/rules';
+import { runLint, RULE_META } from './lint'
 import { DEFAULT_LINT_CONFIG } from './lint/config';
-import { getNodePath } from './utils/node-path';
+import { getNodePath } from './figma/traversal/node-path';
 import type { LintConfig, LintReport, PluginToUi, UiToPlugin } from './utils/types';
 
 figma.showUI(uiHtml, { width: 620, height: 760 });

@@ -9,7 +9,7 @@ const rulesOut = join(tmpDir, 'rules.mjs');
 const scanOut = join(tmpDir, 'scan.mjs');
 
 await build({
-  entryPoints: ['src/lint/rules.ts'],
+  entryPoints: ['src/lint/index.ts'],
   bundle: true,
   platform: 'node',
   format: 'esm',
@@ -19,7 +19,7 @@ await build({
 });
 
 await build({
-  entryPoints: ['src/scan/index.ts'],
+  entryPoints: ['src/rules/index.ts'],
   bundle: true,
   platform: 'node',
   format: 'esm',

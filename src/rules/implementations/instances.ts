@@ -1,6 +1,6 @@
-import { getNodePath } from '../../utils/node-path';
-import type { FindingDraft, RuleEvaluator } from './shared';
-import { getPageName, isNodeUnsafe, resolveMainComponent } from './shared';
+import { getNodePath } from '../../figma/traversal/node-path';
+import type { FindingDraft, RuleEvaluator } from '../../figma';
+import { getPageName, isNodeUnsafe, resolveMainComponent } from '../../figma';
 
 export const instanceSizeOverride: RuleEvaluator = async ({ root }) => {
   const findings: FindingDraft[] = [];

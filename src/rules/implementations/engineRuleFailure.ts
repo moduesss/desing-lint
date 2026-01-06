@@ -1,3 +1,3 @@
-import type { RuleEvaluator } from './shared';
+import type { RuleEvaluator } from '../../figma';
 
 export const engineRuleFailure: RuleEvaluator = async () => [];

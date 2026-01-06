@@ -1,5 +1,5 @@
-import { getNodePath } from '../../utils/node-path';
-import type { FindingDraft, RuleEvaluator } from './shared';
+import { getNodePath } from '../../figma/traversal/node-path';
+import type { FindingDraft, RuleEvaluator } from '../../figma';
 import {
   extractVariableBindings,
   getComponentPropertyDefinitionsFor,
@@ -7,7 +7,7 @@ import {
   getUnsafeNodes,
   isNodeUnsafe,
   markNodeUnsafe,
-} from './shared';
+} from '../../figma';
 
 async function scanNodeForVariableIssues(node: BaseNode) {
   // Trigger variable binding access; guards inside will mark unsafe on failure.

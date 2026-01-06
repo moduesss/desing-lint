@@ -1,5 +1,5 @@
 import type { RuleCopy } from '../../utils/types';
-import type { RuleId } from '../../lint/rules/meta';
+import type { RuleId } from '..';
 
 export const ruleCopyEn: Record<RuleId, RuleCopy> = {
   'broken-variable-binding': {

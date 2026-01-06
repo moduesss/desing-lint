@@ -9,7 +9,7 @@ import { copyText } from './lib/utils/copy';
 import { initialTotals } from './lib/plugin/types';
 import type { Totals } from './lib/types';
 import { usePluginMessages } from './lib/hooks/usePluginMessages';
-import { ruleCopyByLang } from '../src/i18n/rules';
+import { ruleCopyByLang } from '../src/rules/copy';
 import BackdropLoader from './components/BackdropLoader/BackdropLoader';
 import { useRuleMetaLookup } from './hooks/useRuleMetaLookup';
 import { useSeverityFilters } from './hooks/useSeverityFilters';
